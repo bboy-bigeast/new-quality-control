@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import DryFilmProduct, ProductStandard, ProductStandardHistory, DryFilmProductHistory, AdhesiveProduct, AdhesiveProductHistory
+from .models import DryFilmProduct, ProductStandard, ProductStandardHistory, DryFilmProductHistory, AdhesiveProduct, AdhesiveProductHistory, PilotProduct, PilotProductHistory
 
 @admin.register(DryFilmProduct)
 class DryFilmProductAdmin(admin.ModelAdmin):
@@ -636,6 +636,235 @@ class AdhesiveProductHistoryAdmin(admin.ModelAdmin):
     list_filter = ['created_at', 'modified_by']
     search_fields = ['adhesive_product__product_code', 'adhesive_product__batch_number', 'modified_by', 'modification_reason']
     readonly_fields = ['adhesive_product', 'modified_by', 'modification_reason', 'modified_data', 'created_at']
+    ordering = ['-created_at']
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(PilotProduct)
+class PilotProductAdmin(admin.ModelAdmin):
+    list_display = [
+        'product_code', 'batch_number', 'production_line', 'inspector', 
+        'test_date', 'sample_category'
+    ]
+    list_filter = [
+        'production_line', 'test_date', 'sample_category'
+    ]
+    search_fields = ['product_code', 'batch_number', 'inspector']
+    date_hierarchy = 'test_date'
+    ordering = ['-test_date', 'batch_number']
+    
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        from django import forms
+        
+        # 为sample_category字段提供下拉选择
+        if db_field.name == 'sample_category':
+            SAMPLE_CATEGORIES = [
+                ('单批样', '单批样'),
+                ('装车样', '装车样'),
+                ('掺桶样', '掺桶样')
+            ]
+            kwargs['widget'] = forms.Select(choices=SAMPLE_CATEGORIES)
+        
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
+    
+    fieldsets = (
+        ('产品信息', {
+            'fields': (
+                'product_code', 'batch_number', 'production_line', 
+                'inspector', 'test_date', 'sample_category', 'remarks'
+            )
+        }),
+        ('产品数据', {
+            'fields': (
+                'appearance', 'solid_content', 'viscosity', 'acid_value',
+                'moisture', 'residual_monomer', 'weight_avg_molecular_weight',
+                'pdi', 'color', 'polymerization_inhibitor', 'conversion_rate',
+                'loading_temperature'
+            ),
+            'classes': ('collapse',)
+        }),
+        ('修改历史', {
+            'fields': (
+                'created_at', 'updated_at', 'modified_by', 'modification_reason'
+            ),
+            'classes': ('collapse',)
+        }),
+        ('复制文本', {
+            'fields': ('copy_text',),
+            'classes': ('collapse',)
+        })
+    )
+    
+    readonly_fields = [
+        'created_at', 'updated_at', 'modified_by', 
+        'modification_reason', 'copy_text'
+    ]
+    
+    def copy_text(self, obj):
+        """生成用于复制的文本内容"""
+        if not obj.pk:
+            return "请先保存数据以生成复制文本"
+        
+        # 产品信息
+        product_info = f"牌号: {obj.product_code}\n批号: {obj.batch_number}\n"
+        
+        # 产品数据（不为空的内容）
+        data_fields = [
+            ('appearance', '外观'),
+            ('solid_content', '固含'),
+            ('viscosity', '粘度'),
+            ('acid_value', '酸值'),
+            ('moisture', '水分'),
+            ('residual_monomer', '残单'),
+            ('weight_avg_molecular_weight', '重均分子量'),
+            ('pdi', 'PDI'),
+            ('color', '色度'),
+            ('polymerization_inhibitor', '阻聚剂'),
+            ('conversion_rate', '转化率'),
+            ('loading_temperature', '装车温度')
+        ]
+        
+        data_lines = []
+        for field_name, field_label in data_fields:
+            value = getattr(obj, field_name)
+            if value is not None and value != "":
+                data_lines.append(f"{field_label}: {value}")
+        
+        if data_lines:
+            product_info += "\n".join(data_lines)
+        
+        # 添加复制按钮和内联JavaScript
+        copy_button = f"""
+        <div style="margin-top: 10px;">
+            <button type="button" onclick="copyToClipboard()" 
+                    style="background-color: #4CAF50; color: white; border: none; 
+                           padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+                复制文本
+            </button>
+        </div>
+        <script>
+        function copyToClipboard() {{
+            const text = document.getElementById('copy-text-content').textContent;
+            navigator.clipboard.writeText(text).then(() => {{
+                alert('已复制到剪贴板！');
+            }}).catch(err => {{
+                console.error('复制失败:', err);
+                alert('复制失败，请手动复制文本内容');
+            }});
+        }}
+        </script>
+        """
+        
+        # 使用mark_safe确保HTML被正确渲染
+        from django.utils.safestring import mark_safe
+        return mark_safe(f'<div id="copy-text-content" style="white-space: pre-line;">{product_info}</div>{copy_button}')
+    
+    copy_text.short_description = "复制文本"
+    copy_text.allow_tags = True
+    
+    def save_model(self, request, obj, form, change):
+        # 记录修改人信息
+        if change:  # 如果是修改操作
+            obj.modified_by = request.user.username
+            
+            # 获取原始对象和当前表单数据的差异
+            original_obj = self.model.objects.get(pk=obj.pk)
+            changed_fields = []
+            modified_data = {}
+            
+            # 检查哪些字段被修改了
+            for field in obj._meta.fields:
+                field_name = field.name
+                if field_name not in ['created_at', 'updated_at', 'modified_by', 'modification_reason']:
+                    original_value = getattr(original_obj, field_name)
+                    new_value = getattr(obj, field_name)
+                    
+                    if original_value != new_value:
+                        # 格式化字段显示名称
+                        field_verbose = field.verbose_name if hasattr(field, 'verbose_name') else field_name
+                        changed_fields.append(f"{field_verbose}: {original_value} → {new_value}")
+                        modified_data[field_name] = {
+                            'old': original_value,
+                            'new': new_value
+                        }
+            
+            # 生成自动修改描述
+            if changed_fields:
+                obj.modification_reason = f"自动检测到修改：{'; '.join(changed_fields)}"
+            else:
+                obj.modification_reason = "通过管理界面修改（无数据变更）"
+            
+            # 创建历史记录（每次修改都创建，无论是否有修改原因）
+            PilotProductHistory.objects.create(
+                pilot_product=obj,
+                modified_by=request.user.username,
+                modification_reason=obj.modification_reason,
+                modified_data=modified_data
+            )
+        
+        super().save_model(request, obj, form, change)
+    
+    def response_add(self, request, obj, post_url_continue=None):
+        # 添加成功后显示详细判定结果
+        from django.http import HttpResponseRedirect
+        from django.urls import reverse
+        
+        if '_continue' not in request.POST and '_addanother' not in request.POST:
+            # 重定向到查看页面
+            return HttpResponseRedirect(reverse('admin:products_pilotproduct_change', args=[obj.pk]))
+        return super().response_add(request, obj, post_url_continue)
+    
+    def get_urls(self):
+        from django.urls import path
+        urls = super().get_urls()
+        custom_urls = [
+            path('<path:object_id>/history/', self.admin_site.admin_view(self.history_view), name='products_pilotproduct_history'),
+        ]
+        return custom_urls + urls
+    
+    def history_view(self, request, object_id, extra_context=None):
+        """自定义历史记录视图"""
+        from django.shortcuts import get_object_or_404
+        obj = get_object_or_404(PilotProduct, pk=object_id)
+        history_records = PilotProductHistory.objects.filter(pilot_product=obj).order_by('-created_at')
+        
+        context = {
+            'title': f'修改历史 - {obj}',
+            'object': obj,
+            'history_records': history_records,
+            'opts': self.model._meta,
+            'app_label': self.model._meta.app_label,
+        }
+        context.update(extra_context or {})
+        
+        return super().history_view(request, object_id, context)
+    
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['show_save_and_continue'] = False
+        extra_context['show_save_and_add_another'] = False
+        extra_context['show_save'] = True
+        
+        # 添加返回列表按钮
+        extra_context['show_return_to_list'] = True
+        
+        return super().change_view(request, object_id, form_url, extra_context)
+
+
+@admin.register(PilotProductHistory)
+class PilotProductHistoryAdmin(admin.ModelAdmin):
+    list_display = ['pilot_product', 'modified_by', 'modification_reason', 'created_at']
+    list_filter = ['created_at', 'modified_by']
+    search_fields = ['pilot_product__product_code', 'pilot_product__batch_number', 'modified_by', 'modification_reason']
+    readonly_fields = ['pilot_product', 'modified_by', 'modification_reason', 'modified_data', 'created_at']
     ordering = ['-created_at']
     
     def has_add_permission(self, request):
