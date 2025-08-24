@@ -663,3 +663,25 @@ def raw_material_comparison(request):
             'test_item': test_item
         }
     })
+
+
+@require_http_methods(["GET"])
+def raw_material_options(request):
+    """获取原料名称选项API"""
+    # 获取所有不重复的原料名称
+    material_names = RawMaterial.objects.values_list('material_name', flat=True).distinct().order_by('material_name')
+    
+    return JsonResponse({
+        'material_names': list(material_names)
+    })
+
+
+@require_http_methods(["GET"])
+def supplier_options(request):
+    """获取供应商选项API"""
+    # 获取所有不重复的供应商
+    suppliers = RawMaterial.objects.values_list('supplier', flat=True).distinct().order_by('supplier')
+    
+    return JsonResponse({
+        'suppliers': list(suppliers)
+    })

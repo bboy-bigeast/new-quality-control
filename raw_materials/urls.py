@@ -18,4 +18,8 @@ urlpatterns = [
     path('api/stats/', views.raw_material_stats, name='raw_material_stats'),
     path('api/charts/', views.raw_material_charts, name='raw_material_charts'),
     path('api/comparison/', views.raw_material_comparison, name='raw_material_comparison'),
+    
+    # 新增选项API
+    path('api/options/materials/', views.raw_material_options, name='raw_material_options'),
+    path('api/options/suppliers/', views.supplier_options, name='supplier_options'),
 ]

@@ -469,11 +469,17 @@
                                 <form id="rawMaterialSearchForm">
                                     <div class="mb-3">
                                         <label class="form-label">原料名称</label>
-                                        <input type="text" class="form-control" id="rawMaterialName" placeholder="输入原料名称">
+                                        <select class="form-select" id="rawMaterialName">
+                                            <option value="">全部</option>
+                                            <!-- 原料名称选项将通过JavaScript动态加载 -->
+                                        </select>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">供应商</label>
-                                        <input type="text" class="form-control" id="rawMaterialSupplier" placeholder="输入供应商名称">
+                                        <select class="form-select" id="rawMaterialSupplier">
+                                            <option value="">全部</option>
+                                            <!-- 供应商选项将通过JavaScript动态加载 -->
+                                        </select>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">检测项目</label>
@@ -588,10 +594,10 @@
                             </div>
                         </div>
 
-                        <!-- 质量趋势图 -->
+                        <!-- 原料质量趋势图（新版） -->
                         <div class="card mt-4">
-                            <div class="card-header bg-warning text-dark">
-                                <h5 class="mb-0">原料质量趋势图</h5>
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">原料质量趋势分析</h5>
                             </div>
                             <div class="card-body">
                                 <div class="loading" id="rawMaterialChartLoading">
@@ -601,7 +607,10 @@
                                     <p class="mt-2">正在生成图表...</p>
                                 </div>
                                 <div class="chart-container">
-                                    <canvas id="rawMaterialQualityChart"></canvas>
+                                    <canvas id="rawMaterialTrendChart"></canvas>
+                                </div>
+                                <div class="mt-3" id="rawMaterialChartInfo">
+                                    <!-- 图表信息将在这里显示 -->
                                 </div>
                             </div>
                         </div>
@@ -659,7 +668,7 @@
 
             // 加载质量趋势图
             document.getElementById('dryfilmChartLoading').style.display = 'block';
-            fetch(`/api/chart-data/?${params}`)
+            fetch(`/api/products/dryfilm/chart-data/?${params}`)
                 .then(response => response.json())
                 .then(data => {
                     updateDryfilmChart(data);
@@ -674,7 +683,7 @@
 
             // 加载移动极差图
             document.getElementById('dryfilmMrChartLoading').style.display = 'block';
-            fetch(`/api/moving-range-data/?${params}`)
+            fetch(`/api/products/dryfilm/moving-range/?${params}`)
                 .then(response => response.json())
                 .then(data => {
                     updateDryfilmMRChart(data);
@@ -689,7 +698,7 @@
 
             // 加载能力分析图
             document.getElementById('dryfilmCapabilityChartLoading').style.display = 'block';
-            fetch(`/api/capability-analysis/?${params}`)
+            fetch(`/api/products/dryfilm/capability-analysis/?${params}`)
                 .then(response => response.json())
                 .then(data => {
                     updateDryfilmCapabilityChart(data);
@@ -712,7 +721,7 @@
             if (endDate) params.append('end_date', endDate);
 
             // 加载查询结果
-            fetch(`/api/search-products/?${params}`)
+            fetch(`/api/products/dryfilm/search/?${params}`)
                 .then(response => response.json())
                 .then(data => {
                     updateDryfilmSearchResults(data.products);
@@ -1097,7 +1106,7 @@
 
             // 加载质量趋势图
             document.getElementById('adhesiveChartLoading').style.display = 'block';
-            fetch(`/api/adhesive/chart-data/?${params}`)
+            fetch(`/api/products/adhesive/chart-data/?${params}`)
                 .then(response => response.json())
                 .then(data => {
                     updateAdhesiveChart(data);
@@ -1112,7 +1121,7 @@
 
             // 加载移动极差图
             document.getElementById('adhesiveMrChartLoading').style.display = 'block';
-            fetch(`/api/adhesive/moving-range-data/?${params}`)
+            fetch(`/api/products/adhesive/moving-range/?${params}`)
                 .then(response => response.json())
                 .then(data => {
                     updateAdhesiveMRChart(data);
@@ -1127,7 +1136,7 @@
 
             // 加载能力分析图
             document.getElementById('adhesiveCapabilityChartLoading').style.display = 'block';
-            fetch(`/api/adhesive/capability-analysis/?${params}`)
+            fetch(`/api/products/adhesive/capability-analysis/?${params}`)
                 .then(response => response.json())
                 .then(data => {
                     updateAdhesiveCapabilityChart(data);
@@ -1150,7 +1159,7 @@
             if (endDate) params.append('end_date', endDate);
 
             // 加载查询结果
-            fetch(`/api/adhesive/search-products/?${params}`)
+            fetch(`/api/products/adhesive/search/?${params}`)
                 .then(response => response.json())
                 .then(data => {
                     updateAdhesiveSearchResults(data.products);
@@ -1547,7 +1556,7 @@
 
             // 加载原料数据表格
             document.getElementById('rawMaterialChartLoading').style.display = 'block';
-            fetch(`/raw_materials/api/materials/?${params}`)
+            fetch(`/raw-materials/api/materials/?${params}`)
                 .then(response => response.json())
                 .then(data => {
                     updateRawMaterialTable(data.results);
@@ -1561,7 +1570,7 @@
                 });
 
             // 加载统计信息
-            fetch(`/raw_materials/api/stats/?${params}`)
+            fetch(`/raw-materials/api/stats/?${params}`)
                 .then(response => response.json())
                 .then(data => {
                     updateRawMaterialStatistics(data);
@@ -1578,7 +1587,7 @@
             if (endDate) chartParams.append('end_date', endDate);
             chartParams.append('test_item', testItem);
 
-            fetch(`/raw_materials/api/charts/?${chartParams}`)
+            fetch(`/raw-materials/api/charts/?${chartParams}`)
                 .then(response => response.json())
                 .then(data => {
                     updateRawMaterialQualityChart(data);
@@ -1720,7 +1729,7 @@
 
         // 更新原料质量趋势图
         function updateRawMaterialQualityChart(data) {
-            const ctx = document.getElementById('rawMaterialQualityChart').getContext('2d');
+            const ctx = document.getElementById('rawMaterialTrendChart').getContext('2d');
             
             // 销毁旧图表
             if (rawMaterialQualityChart) {
@@ -1789,6 +1798,14 @@
                         }
                     }
                 });
+                
+                // 更新图表信息
+                const chartInfoDiv = document.getElementById('rawMaterialChartInfo');
+                chartInfoDiv.innerHTML = `
+                    <div class="alert alert-info">
+                        <strong>图表信息:</strong> 显示 ${data.time_series.length} 个数据点，时间范围: ${data.time_series[0].date} 至 ${data.time_series[data.time_series.length - 1].date}
+                    </div>
+                `;
             } else {
                 // 没有数据时显示提示
                 rawMaterialQualityChart = new Chart(ctx, {
@@ -1798,28 +1815,47 @@
                         datasets: [{
                             label: '无数据',
                             data: [0],
-                            backgroundColor: 'rgba(200, 200, 200, 0.2)'
+                            backgroundColor: 'rgba(200, 200, 200, 0.5)',
+                            borderColor: 'rgba(200, 200, 200, 1)',
+                            borderWidth: 1
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: {
-                            y: { beginAtZero: true }
+                            y: { 
+                                beginAtZero: true,
+                                display: false
+                            },
+                            x: {
+                                display: false
+                            }
                         },
                         plugins: {
                             legend: { display: false },
                             title: {
                                 display: true,
                                 text: '暂无质量趋势数据'
+                            },
+                            tooltip: {
+                                enabled: false
                             }
                         }
                     }
                 });
+                
+                // 更新图表信息
+                const chartInfoDiv = document.getElementById('rawMaterialChartInfo');
+                chartInfoDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <strong>注意:</strong> 当前筛选条件下没有找到质量趋势数据
+                    </div>
+                `;
             }
         }
 
-        // 页面加载时设置原料查询的默认日期
+        // 页面加载时设置原料查询的默认日期并加载下拉选项
         document.addEventListener('DOMContentLoaded', function() {
             const endDate = new Date();
             const startDate = new Date();
@@ -1828,9 +1864,47 @@
             document.getElementById('rawMaterialStartDate').value = startDate.toISOString().split('T')[0];
             document.getElementById('rawMaterialEndDate').value = endDate.toISOString().split('T')[0];
             
+            // 加载原料名称和供应商下拉选项
+            loadRawMaterialOptions();
+            
             // 初始加载原料数据
             loadRawMaterialData();
         });
+
+        // 加载原料名称和供应商下拉选项
+        function loadRawMaterialOptions() {
+            // 加载原料名称选项
+            fetch('/raw-materials/api/options/materials/')
+                .then(response => response.json())
+                .then(data => {
+                    const materialNameSelect = document.getElementById('rawMaterialName');
+                    // 保留"全部"选项，添加新的原料名称选项
+                    const optionsHtml = '<option value="">全部</option>' + 
+                        data.material_names.map(name => 
+                            `<option value="${name}">${name}</option>`
+                        ).join('');
+                    materialNameSelect.innerHTML = optionsHtml;
+                })
+                .catch(error => {
+                    console.error('Error loading material names:', error);
+                });
+
+            // 加载供应商选项
+            fetch('/raw-materials/api/options/suppliers/')
+                .then(response => response.json())
+                .then(data => {
+                    const supplierSelect = document.getElementById('rawMaterialSupplier');
+                    // 保留"全部"选项，添加新的供应商选项
+                    const optionsHtml = '<option value="">全部</option>' + 
+                        data.suppliers.map(supplier => 
+                            `<option value="${supplier}">${supplier}</option>`
+                        ).join('');
+                    supplierSelect.innerHTML = optionsHtml;
+                })
+                .catch(error => {
+                    console.error('Error loading suppliers:', error);
+                });
+        }
     </script>
 </body>
 </html>
