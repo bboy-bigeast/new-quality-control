@@ -1,0 +1,342 @@
+{% extends 'raw_materials/base.html' %}
+
+{% block title %}数据仪表板 - 原料管理系统{% endblock %}
+
+{% block page_title %}数据仪表板{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">数据仪表板</li>
+{% endblock %}
+
+{% block content %}
+<!-- 统计卡片 -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title">总原料记录</h6>
+                        <h3 class="card-text">{{ total_materials }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-box-seam" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title">合格原料</h6>
+                        <h3 class="card-text">{{ qualified_materials }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title">不合格原料</h6>
+                        <h3 class="card-text">{{ unqualified_materials }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-x-circle" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title">待判定原料</h6>
+                        <h3 class="card-text">{{ pending_materials }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-question-circle" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 原料统计图表 -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">按原料名称统计</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="materialChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 供应商统计图表 -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">按供应商统计</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="supplierChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 每日趋势图表 -->
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">最近30天检测趋势</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="dailyTrendChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详细统计表格 -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">原料详细统计</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>原料名称</th>
+                                <th>总数</th>
+                                <th>合格</th>
+                                <th>不合格</th>
+                                <th>合格率</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in material_stats %}
+                            <tr>
+                                <td>{{ stat.material_name }}</td>
+                                <td>{{ stat.total }}</td>
+                                <td>{{ stat.qualified }}</td>
+                                <td>{{ stat.unqualified }}</td>
+                                <td>
+                                    {% if stat.total > 0 %}
+                                    {{ stat.qualified|floatformat:0 }}/{{ stat.total }} 
+                                    ({{ stat.qualified|div:stat.total|multiply:100|floatformat:1 }}%)
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">供应商详细统计</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>供应商</th>
+                                <th>总数</th>
+                                <th>合格</th>
+                                <th>不合格</th>
+                                <th>合格率</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in supplier_stats %}
+                            <tr>
+                                <td>{{ stat.supplier }}</td>
+                                <td>{{ stat.total }}</td>
+                                <td>{{ stat.qualified }}</td>
+                                <td>{{ stat.unqualified }}</td>
+                                <td>
+                                    {% if stat.total > 0 %}
+                                    {{ stat.qualified|floatformat:0 }}/{{ stat.total }} 
+                                    ({{ stat.qualified|div:stat.total|multiply:100|floatformat:1 }}%)
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 原料统计图表
+    const materialCtx = document.getElementById('materialChart').getContext('2d');
+    const materialChart = new Chart(materialCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ material_stats|map:'material_name'|safe }},
+            datasets: [{
+                label: '合格',
+                data: {{ material_stats|map:'qualified'|safe }},
+                backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                borderColor: 'rgba(40, 167, 69, 1)',
+                borderWidth: 1
+            }, {
+                label: '不合格',
+                data: {{ material_stats|map:'unqualified'|safe }},
+                backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                borderColor: 'rgba(220, 53, 69, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '数量'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: '原料名称'
+                    }
+                }
+            }
+        }
+    });
+
+    // 供应商统计图表
+    const supplierCtx = document.getElementById('supplierChart').getContext('2d');
+    const supplierChart = new Chart(supplierCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ supplier_stats|map:'supplier'|safe }},
+            datasets: [{
+                label: '合格',
+                data: {{ supplier_stats|map:'qualified'|safe }},
+                backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                borderColor: 'rgba(40, 167, 69, 1)',
+                borderWidth: 1
+            }, {
+                label: '不合格',
+                data: {{ supplier_stats|map:'unqualified'|safe }},
+                backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                borderColor: 'rgba(220, 53, 69, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '数量'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: '供应商'
+                    }
+                }
+            }
+        }
+    });
+
+    // 每日趋势图表
+    const dailyCtx = document.getElementById('dailyTrendChart').getContext('2d');
+    const dailyChart = new Chart(dailyCtx, {
+        type: 'line',
+        data: {
+            labels: {{ daily_stats|map:'test_date'|safe }},
+            datasets: [{
+                label: '总检测数',
+                data: {{ daily_stats|map:'total'|safe }},
+                backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                borderColor: 'rgba(13, 110, 253, 1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }, {
+                label: '合格数',
+                data: {{ daily_stats|map:'qualified'|safe }},
+                backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                borderColor: 'rgba(40, 167, 69, 1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '数量'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: '日期'
+                    }
+                }
+            }
+        }
+    });
+
+    // 自定义模板过滤器（在真实环境中应该在Django模板过滤器中实现）
+    function map(array, property) {
+        return array.map(item => item[property]);
+    }
+
+    function div(value, divisor) {
+        return value / divisor;
+    }
+
+    function multiply(value, multiplier) {
+        return value * multiplier;
+    }
+
+    // 将过滤器函数添加到全局作用域
+    window.map = map;
+    window.div = div;
+    window.multiply = multiply;
+</script>
+{% endblock %}

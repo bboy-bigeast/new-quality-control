@@ -1,0 +1,279 @@
+{% extends 'raw_materials/base.html' %}
+
+{% block title %}{{ material.material_name }} - 原料详情 - 原料管理系统{% endblock %}
+
+{% block page_title %}原料详情{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'raw_materials:raw_material_list' %}">原料列表</a></li>
+<li class="breadcrumb-item active">{{ material.material_name }}</li>
+{% endblock %}
+
+{% block actions %}
+<div class="btn-group">
+    <a href="/admin/raw_materials/rawmaterial/{{ material.pk }}/change/" 
+       class="btn btn-outline-primary" target="_blank">
+        <i class="bi bi-pencil"></i> 编辑
+    </a>
+    <button type="button" class="btn btn-outline-info" 
+            onclick="copyMaterialInfo('{{ material.material_name }}', '{{ material.material_batch }}', '{{ material.supplier }}')"
+            title="复制信息">
+        <i class="bi bi-clipboard"></i> 复制
+    </button>
+    <a href="{% url 'raw_materials:raw_material_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> 返回列表
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 基本信息卡片 -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle"></i> 基本信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>原料名称:</strong>
+                    </div>
+                    <div class="col-md-6">
+                        {{ material.material_name }}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>原料批号:</strong>
+                    </div>
+                    <div class="col-md-6">
+                        {{ material.material_batch }}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>样品类别:</strong>
+                    </div>
+                    <div class="col-md-6">
+                        {{ material.sample_category|default:"-" }}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>供应商:</strong>
+                    </div>
+                    <div class="col-md-6">
+                        {{ material.supplier }}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>检测人:</strong>
+                    </div>
+                    <div class="col-md-6">
+                        {{ material.inspector }}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>测试日期:</strong>
+                    </div>
+                    <div class="col-md-6">
+                        {{ material.test_date }}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>判定状态:</strong>
+                    </div>
+                    <div class="col-md-6">
+                        {% if material.judgment_status == '合格' %}
+                        <span class="badge bg-success judgment-badge">合格</span>
+                        {% elif material.judgment_status == '不合格' %}
+                        <span class="badge bg-danger judgment-badge">不合格</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark judgment-badge">待判定</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if material.final_judgment %}
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>最终判定:</strong>
+                    </div>
+                    <div class="col-md-6">
+                        {{ material.final_judgment }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 检测结果卡片 -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clipboard-data"></i> 检测结果
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if material.test_results %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>检测项目</th>
+                                <th>检测结果</th>
+                                <th>标准要求</th>
+                                <th>判定</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in material.test_results %}
+                            <tr>
+                                <td>{{ result.test_item }}</td>
+                                <td>
+                                    <strong>{{ result.test_result }}</strong>
+                                    {% if result.unit %}
+                                    <small class="text-muted">{{ result.unit }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if result.standard_requirement %}
+                                    {{ result.standard_requirement }}
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if result.judgment == '合格' %}
+                                    <span class="badge bg-success">合格</span>
+                                    {% elif result.judgment == '不合格' %}
+                                    <span class="badge bg-danger">不合格</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-clipboard-x" style="font-size: 2rem; color: #6c757d;"></i>
+                    <p class="text-muted mt-2">暂无检测结果数据</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 备注信息卡片 -->
+    {% if material.remarks %}
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-chat-left-text"></i> 备注信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-0">{{ material.remarks }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 相关文件卡片 -->
+    {% if material.related_files %}
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-paperclip"></i> 相关文件
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for file in material.related_files %}
+                    <a href="{{ file.url }}" class="list-group-item list-group-item-action" target="_blank">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ file.name }}</h6>
+                            <small class="text-muted">{{ file.size }}</small>
+                        </div>
+                        <p class="mb-1 text-muted">{{ file.description|default:"" }}</p>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 历史记录卡片 -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock-history"></i> 操作历史
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>操作时间</th>
+                                <th>操作人</th>
+                                <th>操作内容</th>
+                                <th>备注</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if material.operation_history %}
+                            {% for history in material.operation_history %}
+                            <tr>
+                                <td>{{ history.operation_time }}</td>
+                                <td>{{ history.operator }}</td>
+                                <td>{{ history.operation_content }}</td>
+                                <td>{{ history.remarks|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">
+                                    暂无操作历史记录
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 复制原料信息
+    function copyMaterialInfo(materialName, materialBatch, supplier) {
+        const text = `原料名称: ${materialName}\n原料批号: ${materialBatch}\n供应商: ${supplier}`;
+        copyToClipboard(text);
+    }
+</script>
+{% endblock %}

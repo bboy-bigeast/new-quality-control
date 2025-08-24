@@ -459,18 +459,149 @@
             <!-- 原料选项卡 -->
             <div class="tab-pane fade" id="rawmaterial" role="tabpanel" aria-labelledby="rawmaterial-tab">
                 <div class="row">
-                    <div class="col-12">
+                    <!-- 查询窗口 -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">原料查询</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="rawMaterialSearchForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">原料名称</label>
+                                        <input type="text" class="form-control" id="rawMaterialName" placeholder="输入原料名称">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">供应商</label>
+                                        <input type="text" class="form-control" id="rawMaterialSupplier" placeholder="输入供应商名称">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">检测项目</label>
+                                        <select class="form-select" id="rawMaterialTestItem">
+                                            <option value="purity">纯度</option>
+                                            <option value="peak_position">出峰位置</option>
+                                            <option value="inhibitor_content">阻聚剂含量</option>
+                                            <option value="moisture_content">水分含量</option>
+                                            <option value="color">色度</option>
+                                            <option value="ethanol_content">乙醇含量</option>
+                                            <option value="acidity">酸度</option>
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">开始日期</label>
+                                            <input type="date" class="form-control" id="rawMaterialStartDate">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">结束日期</label>
+                                            <input type="date" class="form-control" id="rawMaterialEndDate">
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-primary w-100" onclick="loadRawMaterialData()">
+                                        查询原料数据
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- 合格率统计窗口 -->
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">原料合格率统计</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-6">
+                                        <h4 id="rawMaterialPassRate" class="text-primary">0%</h4>
+                                        <p class="text-muted mb-0">合格率</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h4 id="rawMaterialTotalCount" class="text-info">0</h4>
+                                        <p class="text-muted mb-0">总样本数</p>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <small class="text-muted">基于当前筛选条件下的数据计算</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 供应商统计窗口 -->
                         <div class="card">
                             <div class="card-header bg-warning text-dark">
-                                <h5 class="mb-0">原料质量分析</h5>
+                                <h5 class="mb-0">供应商表现统计</h5>
                             </div>
-                            <div class="card-body text-center">
-                                <div class="py-5">
-                                    <h4 class="text-muted">原料功能开发中</h4>
-                                    <p class="text-muted">敬请期待...</p>
-                                    <a href="/admin/" class="btn btn-primary mt-3">
-                                        前往管理后台
-                                    </a>
+                            <div class="card-body">
+                                <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>供应商</th>
+                                                <th>合格率</th>
+                                                <th>样本数</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="supplierStatsTable">
+                                            <!-- 动态填充 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 数据表格窗口 -->
+                    <div class="col-lg-8 col-md-6">
+                        <!-- 原料数据表格 -->
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">原料数据表</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                    <table class="table table-sm table-striped table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>原料名称</th>
+                                                <th>批号</th>
+                                                <th>供应商</th>
+                                                <th>检测日期</th>
+                                                <th>纯度</th>
+                                                <th>水分</th>
+                                                <th>色度</th>
+                                                <th>判定结果</th>
+                                                <th>操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="rawMaterialTable">
+                                            <!-- 动态填充 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-3">
+                                    <nav aria-label="Page navigation">
+                                        <ul class="pagination pagination-sm justify-content-center" id="rawMaterialPagination">
+                                            <!-- 分页控件 -->
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 质量趋势图 -->
+                        <div class="card mt-4">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">原料质量趋势图</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="loading" id="rawMaterialChartLoading">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">加载中...</span>
+                                    </div>
+                                    <p class="mt-2">正在生成图表...</p>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="rawMaterialQualityChart"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -1391,6 +1522,317 @@
                 'text-success' : parseFloat(finalRate) >= 90 ? 
                 'text-warning' : 'text-danger';
         }
+
+        // 原料数据表相关功能
+        let rawMaterialQualityChart = null;
+        let currentRawMaterialPage = 1;
+        const rawMaterialPageSize = 10;
+
+        // 加载原料数据
+        function loadRawMaterialData() {
+            const materialName = document.getElementById('rawMaterialName').value;
+            const supplier = document.getElementById('rawMaterialSupplier').value;
+            const testItem = document.getElementById('rawMaterialTestItem').value;
+            const startDate = document.getElementById('rawMaterialStartDate').value;
+            const endDate = document.getElementById('rawMaterialEndDate').value;
+
+            // 构建查询参数
+            const params = new URLSearchParams();
+            if (materialName) params.append('material_name', materialName);
+            if (supplier) params.append('supplier', supplier);
+            if (startDate) params.append('start_date', startDate);
+            if (endDate) params.append('end_date', endDate);
+            params.append('page', currentRawMaterialPage);
+            params.append('page_size', rawMaterialPageSize);
+
+            // 加载原料数据表格
+            document.getElementById('rawMaterialChartLoading').style.display = 'block';
+            fetch(`/raw_materials/api/materials/?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateRawMaterialTable(data.results);
+                    updateRawMaterialPagination(data.total, data.page, data.page_size);
+                    document.getElementById('rawMaterialChartLoading').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error loading raw material data:', error);
+                    document.getElementById('rawMaterialChartLoading').style.display = 'none';
+                    alert('加载原料数据失败');
+                });
+
+            // 加载统计信息
+            fetch(`/raw_materials/api/stats/?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateRawMaterialStatistics(data);
+                })
+                .catch(error => {
+                    console.error('Error loading raw material statistics:', error);
+                });
+
+            // 加载质量趋势图
+            const chartParams = new URLSearchParams();
+            if (materialName) chartParams.append('material_name', materialName);
+            if (supplier) chartParams.append('supplier', supplier);
+            if (startDate) chartParams.append('start_date', startDate);
+            if (endDate) chartParams.append('end_date', endDate);
+            chartParams.append('test_item', testItem);
+
+            fetch(`/raw_materials/api/charts/?${chartParams}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateRawMaterialQualityChart(data);
+                })
+                .catch(error => {
+                    console.error('Error loading raw material chart data:', error);
+                });
+        }
+
+        // 更新原料数据表格
+        function updateRawMaterialTable(materials) {
+            const tbody = document.getElementById('rawMaterialTable');
+            tbody.innerHTML = '';
+            
+            if (materials && materials.length > 0) {
+                materials.forEach(material => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${material.material_name}</td>
+                        <td>${material.material_batch}</td>
+                        <td>${material.supplier}</td>
+                        <td>${material.test_date}</td>
+                        <td>${material.quality_data?.purity || 'N/A'}</td>
+                        <td>${material.quality_data?.moisture_content || 'N/A'}</td>
+                        <td>${material.quality_data?.color || 'N/A'}</td>
+                        <td>
+                            <span class="badge ${getJudgmentBadgeClass(material.judgment_status)}">
+                                ${material.final_judgment || material.judgment_status}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="/raw_materials/${material.id}/" class="btn btn-sm btn-info" target="_blank">
+                                详情
+                            </a>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="9" class="text-center text-muted">暂无数据</td>';
+                tbody.appendChild(row);
+            }
+        }
+
+        // 获取判定结果的徽章类
+        function getJudgmentBadgeClass(status) {
+            switch (status) {
+                case '合格': return 'bg-success';
+                case '不合格': return 'bg-danger';
+                case '待判定': return 'bg-warning';
+                case '待复检': return 'bg-info';
+                default: return 'bg-secondary';
+            }
+        }
+
+        // 更新分页控件
+        function updateRawMaterialPagination(total, page, pageSize) {
+            const pagination = document.getElementById('rawMaterialPagination');
+            pagination.innerHTML = '';
+            
+            const totalPages = Math.ceil(total / pageSize);
+            
+            // 上一页按钮
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${page <= 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `
+                <a class="page-link" href="#" onclick="changeRawMaterialPage(${page - 1})">上一页</a>
+            `;
+            pagination.appendChild(prevLi);
+            
+            // 页码按钮
+            const startPage = Math.max(1, page - 2);
+            const endPage = Math.min(totalPages, startPage + 4);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageLi = document.createElement('li');
+                pageLi.className = `page-item ${i === page ? 'active' : ''}`;
+                pageLi.innerHTML = `
+                    <a class="page-link" href="#" onclick="changeRawMaterialPage(${i})">${i}</a>
+                `;
+                pagination.appendChild(pageLi);
+            }
+            
+            // 下一页按钮
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${page >= totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `
+                <a class="page-link" href="#" onclick="changeRawMaterialPage(${page + 1})">下一页</a>
+            `;
+            pagination.appendChild(nextLi);
+        }
+
+        // 切换页码
+        function changeRawMaterialPage(newPage) {
+            currentRawMaterialPage = newPage;
+            loadRawMaterialData();
+        }
+
+        // 更新原料统计信息
+        function updateRawMaterialStatistics(stats) {
+            // 更新合格率统计
+            const total = stats.total_stats.total;
+            const qualified = stats.total_stats.qualified;
+            const passRate = total > 0 ? ((qualified / total) * 100).toFixed(1) : 0;
+            
+            document.getElementById('rawMaterialPassRate').textContent = `${passRate}%`;
+            document.getElementById('rawMaterialTotalCount').textContent = total;
+            
+            // 设置合格率颜色
+            const passRateElement = document.getElementById('rawMaterialPassRate');
+            passRateElement.className = parseFloat(passRate) >= 95 ? 
+                'text-success' : parseFloat(passRate) >= 90 ? 
+                'text-warning' : 'text-danger';
+            
+            // 更新供应商统计表格
+            const supplierTable = document.getElementById('supplierStatsTable');
+            supplierTable.innerHTML = '';
+            
+            if (stats.supplier_stats && stats.supplier_stats.length > 0) {
+                stats.supplier_stats.forEach(supplier => {
+                    const supplierPassRate = supplier.total > 0 ? 
+                        ((supplier.qualified / supplier.total) * 100).toFixed(1) : 0;
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${supplier.supplier}</td>
+                        <td>${supplierPassRate}%</td>
+                        <td>${supplier.total}</td>
+                    `;
+                    supplierTable.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="3" class="text-center text-muted">暂无供应商数据</td>';
+                supplierTable.appendChild(row);
+            }
+        }
+
+        // 更新原料质量趋势图
+        function updateRawMaterialQualityChart(data) {
+            const ctx = document.getElementById('rawMaterialQualityChart').getContext('2d');
+            
+            // 销毁旧图表
+            if (rawMaterialQualityChart) {
+                rawMaterialQualityChart.destroy();
+            }
+            
+            if (data.time_series && data.time_series.length > 0) {
+                // 创建新图表
+                rawMaterialQualityChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.time_series.map(item => item.date.split('T')[0]),
+                        datasets: [{
+                            label: document.getElementById('rawMaterialTestItem').selectedOptions[0].text,
+                            data: data.time_series.map(item => item.value),
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            tension: 0.1,
+                            fill: true,
+                            pointBackgroundColor: data.time_series.map(item => 
+                                item.status === '合格' ? 'green' : 
+                                item.status === '不合格' ? 'red' : 'orange'
+                            ),
+                            pointBorderColor: data.time_series.map(item => 
+                                item.status === '合格' ? 'green' : 
+                                item.status === '不合格' ? 'red' : 'orange'
+                            )
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                title: {
+                                    display: true,
+                                    text: '检测值'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '检测日期'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: '原料质量趋势分析'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const index = context.dataIndex;
+                                        const batch = data.time_series[index].batch;
+                                        const status = data.time_series[index].status;
+                                        return `${context.dataset.label}: ${context.parsed.y} (批号: ${batch}, 状态: ${status})`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                // 没有数据时显示提示
+                rawMaterialQualityChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['暂无数据'],
+                        datasets: [{
+                            label: '无数据',
+                            data: [0],
+                            backgroundColor: 'rgba(200, 200, 200, 0.2)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            title: {
+                                display: true,
+                                text: '暂无质量趋势数据'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 页面加载时设置原料查询的默认日期
+        document.addEventListener('DOMContentLoaded', function() {
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 30);
+            
+            document.getElementById('rawMaterialStartDate').value = startDate.toISOString().split('T')[0];
+            document.getElementById('rawMaterialEndDate').value = endDate.toISOString().split('T')[0];
+            
+            // 初始加载原料数据
+            loadRawMaterialData();
+        });
     </script>
+</body>
+</html>
 </body>
 </html>

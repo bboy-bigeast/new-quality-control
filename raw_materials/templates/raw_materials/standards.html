@@ -1,0 +1,217 @@
+{% extends 'raw_materials/base.html' %}
+
+{% block title %}原料标准 - 原料管理系统{% endblock %}
+
+{% block page_title %}原料标准{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">原料标准</li>
+{% endblock %}
+
+{% block actions %}
+<a href="/admin/raw_materials/rawmaterialstandard/add/" class="btn btn-primary" target="_blank">
+    <i class="bi bi-plus-circle"></i> 添加标准
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- 标准筛选表单 -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-filter"></i> 筛选条件
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="material_name" class="form-label">原料名称</label>
+                <input type="text" class="form-control" id="material_name" name="material_name" 
+                       value="{{ material_name }}" placeholder="输入原料名称">
+            </div>
+            <div class="col-md-4">
+                <label for="standard_type" class="form-label">标准类型</label>
+                <select class="form-select" id="standard_type" name="standard_type">
+                    <option value="">全部</option>
+                    <option value="国家标准" {% if standard_type == '国家标准' %}selected{% endif %}>国家标准</option>
+                    <option value="行业标准" {% if standard_type == '行业标准' %}selected{% endif %}>行业标准</option>
+                    <option value="企业标准" {% if standard_type == '企业标准' %}selected{% endif %}>企业标准</option>
+                    <option value="国际标准" {% if standard_type == '国际标准' %}selected{% endif %}>国际标准</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="status" class="form-label">状态</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">全部</option>
+                    <option value="有效" {% if status == '有效' %}selected{% endif %}>有效</option>
+                    <option value="作废" {% if status == '作废' %}selected{% endif %}>作废</option>
+                    <option value="待审核" {% if status == '待审核' %}selected{% endif %}>待审核</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> 搜索
+                </button>
+                <a href="{% url 'raw_materials:raw_material_standards' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-clockwise"></i> 重置
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 标准列表 -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">原料标准 ({{ standards.count }})</h5>
+        <div>
+            <span class="badge bg-success">有效: {{ standards|filter_status:'有效'|length }}</span>
+            <span class="badge bg-danger">作废: {{ standards|filter_status:'作废'|length }}</span>
+            <span class="badge bg-warning text-dark">待审核: {{ standards|filter_status:'待审核'|length }}</span>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if standards %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>原料名称</th>
+                        <th>标准编号</th>
+                        <th>标准类型</th>
+                        <th>发布日期</th>
+                        <th>实施日期</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for standard in standards %}
+                    <tr>
+                        <td>
+                            <strong>{{ standard.material_name }}</strong>
+                            {% if standard.version %}
+                            <br>
+                            <small class="text-muted">版本: {{ standard.version }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ standard.standard_number }}
+                            {% if standard.standard_name %}
+                            <br>
+                            <small class="text-muted">{{ standard.standard_name }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if standard.standard_type == '国家标准' %}
+                            <span class="badge bg-primary">{{ standard.standard_type }}</span>
+                            {% elif standard.standard_type == '行业标准' %}
+                            <span class="badge bg-info text-dark">{{ standard.standard_type }}</span>
+                            {% elif standard.standard_type == '企业标准' %}
+                            <span class="badge bg-secondary">{{ standard.standard_type }}</span>
+                            {% elif standard.standard_type == '国际标准' %}
+                            <span class="badge bg-warning text-dark">{{ standard.standard_type }}</span>
+                            {% else %}
+                            <span class="badge bg-light text-dark">{{ standard.standard_type }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ standard.release_date|default:"-" }}</td>
+                        <td>{{ standard.implementation_date|default:"-" }}</td>
+                        <td>
+                            {% if standard.status == '有效' %}
+                            <span class="badge bg-success">有效</span>
+                            {% elif standard.status == '作废' %}
+                            <span class="badge bg-danger">作废</span>
+                            {% elif standard.status == '待审核' %}
+                            <span class="badge bg-warning text-dark">待审核</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ standard.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-primary" 
+                                        onclick="showStandardDetails({{ standard.pk }})"
+                                        title="查看详情">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <a href="/admin/raw_materials/rawmaterialstandard/{{ standard.pk }}/change/" 
+                                   class="btn btn-outline-secondary" target="_blank" title="编辑">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-info" 
+                                        onclick="copyStandardInfo('{{ standard.material_name }}', '{{ standard.standard_number }}')"
+                                        title="复制信息">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-file-earmark-text" style="font-size: 3rem; color: #6c757d;"></i>
+            <h5 class="mt-3">暂无原料标准</h5>
+            <p class="text-muted">请点击"添加标准"按钮添加新的原料标准</p>
+            <a href="/admin/raw_materials/rawmaterialstandard/add/" class="btn btn-primary" target="_blank">
+                <i class="bi bi-plus-circle"></i> 添加标准
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 标准详情模态框 -->
+<div class="modal fade" id="standardDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">标准详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="standardDetailContent">
+                <!-- 详情内容将通过JavaScript动态加载 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 复制标准信息
+    function copyStandardInfo(materialName, standardNumber) {
+        const text = `原料名称: ${materialName}\n标准编号: ${standardNumber}`;
+        copyToClipboard(text);
+    }
+
+    // 显示标准详情
+    function showStandardDetails(standardId) {
+        // 这里应该通过AJAX加载标准详情
+        // 由于是演示，我们使用一个简单的占位符
+        const content = `
+            <div class="text-center py-4">
+                <i class="bi bi-hourglass-split" style="font-size: 2rem; color: #6c757d;"></i>
+                <p class="text-muted mt-2">标准详情加载中...</p>
+                <p class="small text-muted">在实际应用中，这里会通过AJAX加载标准的完整信息</p>
+            </div>
+        `;
+        document.getElementById('standardDetailContent').innerHTML = content;
+        new bootstrap.Modal(document.getElementById('standardDetailModal')).show();
+    }
+
+    // 自定义过滤器（在模板中使用的简单版本）
+    function filter_status(standards, status) {
+        return standards.filter(s => s.status === status);
+    }
+
+    // 将过滤器函数添加到全局作用域
+    window.filter_status = filter_status;
+</script>
+{% endblock %}

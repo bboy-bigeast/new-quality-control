@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'products',
     'dashboard',
     'reports',
+    'raw_materials',
 ]
 
 MIDDLEWARE = [
