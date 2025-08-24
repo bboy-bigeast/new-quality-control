@@ -623,6 +623,124 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- 添加性能优化：延迟加载和资源预加载 -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    
+    <!-- 添加移动端优化 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- 添加压缩和缓存优化 -->
+    <script>
+        // 添加简单的加载状态管理
+        let isLoading = false;
+        
+        // 优化函数：防抖处理
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // 优化函数：节流处理
+        function throttle(func, limit) {
+            let inThrottle;
+            return function() {
+                const args = arguments;
+                const context = this;
+                if (!inThrottle) {
+                    func.apply(context, args);
+                    inThrottle = true;
+                    setTimeout(() => inThrottle = false, limit);
+                }
+            }
+        }
+        
+        // 添加移动端连接稳定性优化
+        let retryCount = 0;
+        const MAX_RETRIES = 3;
+        
+        function fetchWithRetry(url, options = {}) {
+            return new Promise((resolve, reject) => {
+                const attemptFetch = (attempt = 1) => {
+                    fetch(url, options)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            retryCount = 0; // 重置重试计数
+                            resolve(response);
+                        })
+                        .catch(error => {
+                            if (attempt <= MAX_RETRIES) {
+                                console.warn(`请求失败，第${attempt}次重试:`, error);
+                                setTimeout(() => attemptFetch(attempt + 1), 1000 * attempt);
+                            } else {
+                                console.error(`请求失败，已达到最大重试次数:`, error);
+                                reject(error);
+                            }
+                        });
+                };
+                
+                attemptFetch();
+            });
+        }
+        
+        // 添加移动端性能监控
+        function monitorPerformance() {
+            if ('connection' in navigator) {
+                const connection = navigator.connection;
+                console.log('网络连接信息:', {
+                    effectiveType: connection.effectiveType,
+                    downlink: connection.downlink,
+                    rtt: connection.rtt
+                });
+                
+                // 根据网络状况调整请求策略
+                if (connection.effectiveType === '2g' || connection.downlink < 1) {
+                    console.log('检测到慢速网络，启用精简模式');
+                    enableLiteMode();
+                }
+            }
+        }
+        
+        function enableLiteMode() {
+            // 精简模式：减少图表复杂度，禁用动画等
+            Chart.defaults.animation = false;
+            Chart.defaults.responsiveAnimationDuration = 0;
+        }
+        
+        // 页面加载时启动性能监控
+        document.addEventListener('DOMContentLoaded', monitorPerformance);
+    </script>
+    
+    <style>
+        /* 添加加载动画优化 */
+        .spinner-border {
+            width: 2rem;
+            height: 2rem;
+        }
+        
+        /* 移动端触摸优化 */
+        .btn {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        
+        /* 防止移动端缩放问题 */
+        input, select, textarea {
+            font-size: 16px !important;
+        }
+    </style>
+    
     <script>
         // 干膜产品图表实例
         let dryfilmQualityChart = null;
