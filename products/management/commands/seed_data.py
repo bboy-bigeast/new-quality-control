@@ -95,8 +95,6 @@ class Command(BaseCommand):
                             test_date=test_date,
                             sample_category='正常样品',
                             remarks='示例数据',
-                            factory_judgment='合格' if solid_content >= 45.0 and solid_content <= 55.0 else '不合格',
-                            internal_control_judgment='合格' if solid_content >= 48.0 and solid_content <= 52.0 else '不合格',
                             appearance='正常',
                             solid_content=solid_content,
                             viscosity=viscosity,
