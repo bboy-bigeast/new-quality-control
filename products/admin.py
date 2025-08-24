@@ -237,7 +237,8 @@ class DryFilmProductAdmin(admin.ModelAdmin):
 class ProductStandardAdmin(admin.ModelAdmin):
     list_display = [
         'product_code', 'test_item', 'standard_type', 
-        'lower_limit', 'upper_limit', 'target_value'
+        'lower_limit', 'upper_limit', 'target_value',
+        'test_condition', 'unit', 'analysis_method'
     ]
     list_filter = ['product_code', 'standard_type', 'test_item']
     search_fields = ['product_code', 'test_item']
@@ -249,6 +250,9 @@ class ProductStandardAdmin(admin.ModelAdmin):
         }),
         ('标准值', {
             'fields': ('lower_limit', 'upper_limit', 'target_value')
+        }),
+        ('检测信息', {
+            'fields': ('test_condition', 'unit', 'analysis_method')
         }),
         ('修改历史', {
             'fields': ('created_at', 'updated_at', 'modified_by', 'modification_reason'),

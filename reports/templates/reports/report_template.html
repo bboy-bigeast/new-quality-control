@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ report.report_number }} - 产品检测报告</title>
+    <style>
+        body {
+            font-family: 'SimSun', '宋体', serif;
+            margin: 0;
+            padding: 20px;
+            color: #000;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 2px solid #000;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+        }
+        
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .report-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .report-info {
+            margin-bottom: 30px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .info-item {
+            display: flex;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            min-width: 80px;
+        }
+        
+        .divider {
+            border-top: 1px solid #000;
+            margin: 20px 0;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            margin: 25px 0 15px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 11px;
+        }
+        
+        th, td {
+            border: 1px solid #000;
+            padding: 6px 8px;
+            text-align: center;
+        }
+        
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        .conclusion {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #000;
+        }
+        
+        .signature-table {
+            width: 100%;
+            margin-top: 40px;
+        }
+        
+        .signature-table td {
+            border: none;
+            padding: 20px 10px;
+            text-align: center;
+            vertical-align: bottom;
+        }
+        
+        .signature-line {
+            border-bottom: 1px solid #000;
+            margin: 40px 0 5px 0;
+            min-width: 120px;
+            display: inline-block;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 10px;
+            color: #666;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+        
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            
+            .container {
+                border: none;
+                padding: 15px;
+            }
+            
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 报告头部 -->
+        <div class="header">
+            <div class="company-name">{{ company_name }}</div>
+            <div class="report-title">产品检测报告</div>
+        </div>
+
+        <!-- 报告基本信息 -->
+        <div class="report-info">
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">报告编号：</span>
+                    <span>{{ report.report_number }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">产品名称：</span>
+                    <span>{{ report.product_code }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">批号：</span>
+                    <span>{{ report.batch_number }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">生产日期：</span>
+                    <span>{{ report.production_date|date:"Y年m月d日" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">报告日期：</span>
+                    <span>{{ report.report_date|date:"Y年m月d日" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">检验人：</span>
+                    <span>{{ report.inspector }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- 检测结果 -->
+        <div class="section-title">检测结果</div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>检测项目</th>
+                    <th>检测条件</th>
+                    <th>单位</th>
+                    <th>指标要求</th>
+                    <th>结果</th>
+                    <th>分析方法/标准</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in report.test_results %}
+                <tr>
+                    <td>{{ result.test_item }}</td>
+                    <td>{{ result.test_condition|default:"/" }}</td>
+                    <td>{{ result.unit|default:"/" }}</td>
+                    <td>
+                        {% if result.lower_limit is not None and result.upper_limit is not None %}
+                            {{ result.lower_limit }}~{{ result.upper_limit }}
+                        {% elif result.lower_limit is not None %}
+                            ≥{{ result.lower_limit }}
+                        {% elif result.upper_limit is not None %}
+                            ≤{{ result.upper_limit }}
+                        {% else %}
+                            /
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ result.test_value|default:"未检测" }}</strong></td>
+                    <td>{{ result.analysis_method|default:"/" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #666;">
+                        暂无检测数据
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="divider"></div>
+
+        <!-- 结论与备注 -->
+        <div class="section-title">结论与备注</div>
+        
+        <div class="conclusion">
+            <div style="margin-bottom: 15px;">
+                <strong>判定结论：</strong>
+                <span style="{% if report.conclusion == '合格' %}color: green;{% elif report.conclusion == '不合格' %}color: red;{% endif %}">
+                    {{ report.conclusion|default:"待判定" }}
+                </span>
+            </div>
+            
+            {% if report.remarks %}
+            <div>
+                <strong>备注：</strong>
+                <span>{{ report.remarks }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- 签名信息 -->
+        <div class="section-title">签名信息</div>
+        
+        <table class="signature-table">
+            <tr>
+                <td style="width: 33%;">
+                    <div class="signature-line"></div>
+                    <div>检验人：{{ report.inspector_signature|default:report.inspector }}</div>
+                </td>
+                <td style="width: 33%;">
+                    <div class="signature-line"></div>
+                    <div>编制人：{{ report.inspector_signature|default:report.inspector }}</div>
+                </td>
+                <td style="width: 33%;">
+                    <div class="signature-line"></div>
+                    <div>审核人：{{ report.reviewer_signature|default:report.reviewer }}</div>
+                    {% if report.review_date %}
+                    <div style="margin-top: 5px;">日期：{{ report.review_date|date:"Y年m月d日" }}</div>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+
+        <!-- 页脚 -->
+        <div class="footer">
+            <p>注：含公司正式印章（{{ company_name }}）</p>
+            <p>报告生成时间：{% now "Y年m月d日 H:i" %}</p>
+        </div>
+    </div>
+
+    <!-- 打印按钮（仅在屏幕上显示） -->
+    <div class="no-print" style="position: fixed; top: 20px; right: 20px;">
+        <button onclick="window.print()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            打印报告
+        </button>
+    </div>
+</body>
+</html>

@@ -30,6 +30,7 @@ class RawMaterialStandard(models.Model):
     target_value = models.FloatField(null=True, blank=True, verbose_name='目标值')
     supplier = models.CharField(max_length=100, blank=True, verbose_name='供应商')
     
+    
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
     modified_by = models.CharField(max_length=50, blank=True, verbose_name='修改人')
@@ -47,9 +48,8 @@ class RawMaterialStandard(models.Model):
 class RawMaterial(models.Model):
     """原料模型"""
     SAMPLE_CATEGORY_CHOICES = [
-        ('单批样', '单批样'),
-        ('装车样', '装车样'),
-        ('掺桶样', '掺桶样'),
+        ('来料', '来料'),
+        ('送样', '送样'),
     ]
     
     JUDGMENT_STATUS_CHOICES = [

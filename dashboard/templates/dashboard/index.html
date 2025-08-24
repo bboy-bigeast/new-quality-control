@@ -64,6 +64,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <div class="navbar-nav">
                     <a class="nav-link active" href="#">首页</a>
+                    <a class="nav-link" href="{% url 'reports:report_list' %}">检测报告</a>
                     <a class="nav-link" href="/admin/">管理后台</a>
                 </div>
             </div>
@@ -576,7 +577,6 @@
                                                 <th>水分</th>
                                                 <th>色度</th>
                                                 <th>判定结果</th>
-                                                <th>操作</th>
                                             </tr>
                                         </thead>
                                         <tbody id="rawMaterialTable">
@@ -1812,11 +1812,6 @@
                             <span class="badge ${getJudgmentBadgeClass(material.judgment_status)}">
                                 ${material.final_judgment || material.judgment_status}
                             </span>
-                        </td>
-                        <td>
-                            <a href="/raw_materials/${material.id}/" class="btn btn-sm btn-info" target="_blank">
-                                详情
-                            </a>
                         </td>
                     `;
                     tbody.appendChild(row);

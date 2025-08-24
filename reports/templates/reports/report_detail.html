@@ -1,0 +1,355 @@
+{% extends "reports/base.html" %}
+{% load static %}
+
+{% block title %}检测报告详情 - 质量控制系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">检测报告详情</h1>
+        <div class="btn-group">
+            <a href="{% url 'reports:report_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 返回列表
+            </a>
+            <a href="{% url 'reports:generate_pdf' report.id %}" class="btn btn-primary">
+                <i class="fas fa-download"></i> 下载报告
+            </a>
+            {% if report.status == 'draft' %}
+                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal">
+                    <i class="fas fa-edit"></i> 编辑
+                </button>
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                    <i class="fas fa-trash"></i> 删除
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- 报告基本信息 -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">报告基本信息</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">报告编号:</dt>
+                                <dd class="col-sm-8">{{ report.report_number }}</dd>
+                                
+                                <dt class="col-sm-4">报告类型:</dt>
+                                <dd class="col-sm-8">{{ report.get_report_type_display }}</dd>
+                                
+                                <dt class="col-sm-4">产品牌号:</dt>
+                                <dd class="col-sm-8">{{ report.product_code }}</dd>
+                                
+                                <dt class="col-sm-4">批号:</dt>
+                                <dd class="col-sm-8">{{ report.batch_number }}</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">生产日期:</dt>
+                                <dd class="col-sm-8">{{ report.production_date|date:"Y-m-d" }}</dd>
+                                
+                                <dt class="col-sm-4">检验人:</dt>
+                                <dd class="col-sm-8">{{ report.inspector }}</dd>
+                                
+                                <dt class="col-sm-4">报告日期:</dt>
+                                <dd class="col-sm-8">{{ report.report_date|date:"Y-m-d" }}</dd>
+                                
+                                <dt class="col-sm-4">状态:</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge {% if report.status == 'published' %}bg-success{% else %}bg-warning{% endif %}">
+                                        {{ report.get_status_display }}
+                                    </span>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 检测结果 -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">检测结果</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>检测项目</th>
+                                    <th>检测条件</th>
+                                    <th>单位</th>
+                                    <th>指标要求</th>
+                                    <th>结果</th>
+                                    <th>分析方法/标准</th>
+                                    <th>状态</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in report.test_results %}
+                                    <tr>
+                                        <td>{{ result.test_item }}</td>
+                                        <td>{{ result.test_condition|default:"/" }}</td>
+                                        <td>{{ result.unit|default:"/" }}</td>
+                                        <td>
+                                            {% if result.lower_limit is not None and result.upper_limit is not None %}
+                                                {{ result.lower_limit }}~{{ result.upper_limit }}
+                                            {% elif result.lower_limit is not None %}
+                                                ≥{{ result.lower_limit }}
+                                            {% elif result.upper_limit is not None %}
+                                                ≤{{ result.upper_limit }}
+                                            {% else %}
+                                                /
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <strong {% if result.is_qualified == False %}class="text-danger"{% endif %}>
+                                                {{ result.test_value|default:"未检测" }}
+                                            </strong>
+                                        </td>
+                                        <td>{{ result.analysis_method|default:"/" }}</td>
+                                        <td>
+                                            {% if result.is_qualified == True %}
+                                                <span class="badge bg-success">合格</span>
+                                            {% elif result.is_qualified == False %}
+                                                <span class="badge bg-danger">不合格</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">未判定</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-4">
+                                            <i class="fas fa-exclamation-circle"></i> 暂无检测结果
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 结论与备注 -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">结论与备注</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">判定结论:</label>
+                        <p class="{% if report.conclusion == '合格' %}text-success{% elif report.conclusion == '不合格' %}text-danger{% endif %}">
+                            {{ report.conclusion|default:"待完成" }}
+                        </p>
+                    </div>
+                    <div>
+                        <label class="form-label fw-bold">备注:</label>
+                        <p class="text-muted">{{ report.remarks|default:"无" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 签名信息 -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">签名信息</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">检验人:</label>
+                                <p>{{ report.inspector_signature|default:"未签名" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">审核人:</label>
+                                <p>{{ report.reviewer_signature|default:"未签名" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% if report.review_date %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">审核日期:</label>
+                                <p>{{ report.review_date|date:"Y-m-d" }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- 操作面板 -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">操作</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'reports:generate_pdf' report.id %}" class="btn btn-primary mb-2">
+                            <i class="fas fa-file-pdf"></i> 导出PDF
+                        </a>
+                        <a href="#" class="btn btn-outline-primary mb-2" onclick="window.print()">
+                            <i class="fas fa-print"></i> 打印报告
+                        </a>
+                        {% if report.status == 'draft' %}
+                            <button type="button" class="btn btn-warning mb-2" data-bs-toggle="modal" data-bs-target="#editModal">
+                                <i class="fas fa-edit"></i> 编辑报告
+                            </button>
+                            <button type="button" class="btn btn-outline-danger mb-2" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fas fa-trash"></i> 删除报告
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 报告信息 -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">报告信息</h6>
+                </div>
+                <div class="card-body">
+                    <div class="small">
+                        <p><strong>创建时间:</strong> {{ report.report_date|date:"Y-m-d" }}</p>
+                        <p><strong>检测项目数:</strong> {{ report.test_results|length }}</p>
+                        <p><strong>报告状态:</strong> 
+                            <span class="badge {% if report.status == 'published' %}bg-success{% else %}bg-warning{% endif %}">
+                                {{ report.get_status_display }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑模态框 -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">编辑检测报告</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    {% csrf_token %}
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit_inspector" class="form-label">检验人</label>
+                            <input type="text" class="form-control" id="edit_inspector" name="inspector" value="{{ report.inspector }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_reviewer" class="form-label">审核人</label>
+                            <input type="text" class="form-control" id="edit_reviewer" name="reviewer" value="{{ report.reviewer }}">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_conclusion" class="form-label">判定结论</label>
+                        <select class="form-select" id="edit_conclusion" name="conclusion">
+                            <option value="">请选择结论</option>
+                            <option value="合格" {% if report.conclusion == '合格' %}selected{% endif %}>合格</option>
+                            <option value="不合格" {% if report.conclusion == '不合格' %}selected{% endif %}>不合格</option>
+                            <option value="待完成" {% if report.conclusion == '待完成' %}selected{% endif %}>待完成</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_remarks" class="form-label">备注</label>
+                        <textarea class="form-control" id="edit_remarks" name="remarks" rows="3">{{ report.remarks }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_status" class="form-label">报告状态</label>
+                        <select class="form-select" id="edit_status" name="status">
+                            <option value="draft" {% if report.status == 'draft' %}selected{% endif %}>草稿</option>
+                            <option value="published" {% if report.status == 'published' %}selected{% endif %}>已发布</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveEditBtn">保存更改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                确定要删除报告 {{ report.report_number }} 吗？此操作不可逆。
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <form action="{% url 'reports:delete_report' report.id %}" method="post" id="deleteForm">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">确认删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 编辑表单提交
+        document.getElementById('saveEditBtn').addEventListener('click', function() {
+            const formData = {
+                inspector: document.getElementById('edit_inspector').value,
+                reviewer: document.getElementById('edit_reviewer').value,
+                conclusion: document.getElementById('edit_conclusion').value,
+                remarks: document.getElementById('edit_remarks').value,
+                status: document.getElementById('edit_status').value
+            };
+
+            fetch('{% url 'reports:update_report' report.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('更新失败: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('网络错误，请重试');
+            });
+        });
+
+        // 删除表单提交
+        document.getElementById('deleteForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (confirm('确定要删除此报告吗？此操作不可逆。')) {
+                this.submit();
+            }
+        });
+    });
+</script>
+{% endblock %}

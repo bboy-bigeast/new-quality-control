@@ -217,6 +217,11 @@ class ProductStandard(models.Model):
     upper_limit = models.FloatField(null=True, blank=True, verbose_name="上限")
     target_value = models.FloatField(null=True, blank=True, verbose_name="目标值")
     
+    # 新增字段
+    test_condition = models.CharField(max_length=200, blank=True, verbose_name="检测条件")
+    unit = models.CharField(max_length=50, blank=True, verbose_name="单位")
+    analysis_method = models.CharField(max_length=200, blank=True, verbose_name="分析方法/标准")
+    
     # 修改日志
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
