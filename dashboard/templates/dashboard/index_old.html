@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>质检管理系统 - 首页</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+        .std-dev-line {
+            border-top: 2px dashed;
+            opacity: 0.7;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
+            .card-body {
+                padding: 15px;
+            }
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+        }
+        @media (max-width: 576px) {
+            .chart-container {
+                height: 250px;
+            }
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">质检管理系统</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav">
+                    <a class="nav-link active" href="#">首页</a>
+                    <a class="nav-link" href="/admin/">管理后台</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- 查询窗口 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">产品查询</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="searchForm">
+                            <div class="mb-3">
+                                <label class="form-label">产品牌号</label>
+                                <select class="form-select" id="productCode">
+                                    <option value="">全部</option>
+                                    {% for code in product_codes %}
+                                        <option value="{{ code }}">{{ code }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">产线</label>
+                                <select class="form-select" id="productionLine">
+                                    <option value="">全部</option>
+                                    {% for line in production_lines %}
+                                        <option value="{{ line }}">{{ line }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">检测项目</label>
+                                <select class="form-select" id="testItem">
+                                    <option value="solid_content">固含</option>
+                                    <option value="viscosity">粘度</option>
+                                    <option value="acid_value">酸值</option>
+                                    <option value="moisture">水分</option>
+                                    <option value="residual_monomer">残单</option>
+                                    <option value="weight_avg_molecular_weight">重均分子量</option>
+                                    <option value="pdi">PDI</option>
+                                    <option value="color">色度</option>
+                                </select>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">开始日期</label>
+                                    <input type="date" class="form-control" id="startDate">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">结束日期</label>
+                                    <input type="date" class="form-control" id="endDate">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary w-100" onclick="loadChartData()">
+                                查询并生成图表
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 合格率统计窗口 -->
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">合格率统计</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                        <div class="col-md-6">
+                            <h4 id="internalControlRate" class="text-primary">0%</h4>
+                            <p class="text-muted mb-0">内控合格率</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h4 id="externalControlRate" class="text-success">0%</h4>
+                            <p class="text-muted mb-0">外控合格率</p>
+                        </div>
+                        </div>
+                        <div class="mt-3">
+                            <small class="text-muted">基于当前筛选条件下的数据计算</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 查询结果表格 -->
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">查询结果</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>批号</th>
+                                        <th>牌号</th>
+                                        <th>外控整体判定</th>
+                                        <th>内控整体判定</th>
+                                        <th>判定状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="searchResults">
+                                    <!-- 动态填充 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+    <!-- 图形窗口 -->
+    <div class="col-lg-8 col-md-6">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">质量趋势图</h5>
+            </div>
+            <div class="card-body">
+                <div class="loading" id="chartLoading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2">正在生成图表...</p>
+                </div>
+                <div class="chart-container">
+                    <canvas id="qualityChart"></canvas>
+                </div>
+                <div class="mt-3" id="statisticsInfo">
+                    <!-- 统计信息将在这里显示 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 移动极差图 -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">移动极差图 (MR Chart)</h5>
+            </div>
+            <div class="card-body">
+                <div class="loading" id="mrChartLoading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2">正在生成移动极差图...</p>
+                </div>
+                <div class="chart-container">
+                    <canvas id="mrChart"></canvas>
+                </div>
+                <div class="mt-3" id="mrStatisticsInfo">
+                    <!-- 移动极差统计信息将在这里显示 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 能力分析正态分布图 -->
+        <div class="card mt-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">能力分析正态分布图</h5>
+            </div>
+            <div class="card-body">
+                <div class="loading" id="capabilityChartLoading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2">正在生成能力分析图...</p>
+                </div>
+                <div class="chart-container">
+                    <canvas id="capabilityChart"></canvas>
+                </div>
+                <div class="mt-3" id="capabilityStatisticsInfo">
+                    <!-- 能力分析统计信息将在这里显示 -->
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let qualityChart = null;
+        let mrChart = null;
+        let capabilityChart = null;
+
+        function loadAllCharts() {
+            const productCode = document.getElementById('productCode').value;
+            const productionLine = document.getElementById('productionLine').value;
+            const testItem = document.getElementById('testItem').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            // 构建查询参数
+            const params = new URLSearchParams();
+            if (productCode) params.append('product_code', productCode);
+            if (productionLine) params.append('production_line', productionLine);
+            if (testItem) params.append('test_item', testItem);
+            if (startDate) params.append('start_date', startDate);
+            if (endDate) params.append('end_date', endDate);
+
+            // 加载查询结果
+            loadSearchResults(productCode, productionLine, startDate, endDate);
+
+            // 加载质量趋势图
+            document.getElementById('chartLoading').style.display = 'block';
+            fetch(`/api/chart-data/?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateChart(data);
+                    updateStatistics(data.statistics);
+                    document.getElementById('chartLoading').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('chartLoading').style.display = 'none';
+                    alert('加载图表数据失败');
+                });
+
+            // 加载移动极差图
+            document.getElementById('mrChartLoading').style.display = 'block';
+            fetch(`/api/moving-range-data/?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateMRChart(data);
+                    updateMRStatistics(data.statistics);
+                    document.getElementById('mrChartLoading').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('mrChartLoading').style.display = 'none';
+                    alert('加载移动极差图数据失败');
+                });
+
+            // 加载能力分析图
+            document.getElementById('capabilityChartLoading').style.display = 'block';
+            fetch(`/api/capability-analysis/?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateCapabilityChart(data);
+                    updateCapabilityStatistics(data.statistics);
+                    document.getElementById('capabilityChartLoading').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('capabilityChartLoading').style.display = 'none';
+                    alert('加载能力分析数据失败');
+                });
+        }
+
+        function loadSearchResults(productCode, productionLine, startDate, endDate) {
+            // 构建查询参数
+            const params = new URLSearchParams();
+            if (productCode) params.append('product_code', productCode);
+            if (productionLine) params.append('production_line', productionLine);
+            if (startDate) params.append('start_date', startDate);
+            if (endDate) params.append('end_date', endDate);
+
+            // 加载查询结果
+            fetch(`/api/search-products/?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('搜索API响应:', data);
+                    updateSearchResults(data.products);
+                    calculatePassRates(data.products);
+                })
+                .catch(error => {
+                    console.error('Error loading search results:', error);
+                    updateSearchResults([]);
+                });
+        }
+
+        function updateSearchResults(products) {
+            const tbody = document.getElementById('searchResults');
+            console.log('表格tbody元素:', tbody);
+            tbody.innerHTML = '';
+            
+            console.log('更新搜索结果:', products);
+
+            if (products && products.length > 0) {
+                console.log(`找到 ${products.length} 个产品`);
+                let rowCount = 0;
+                products.forEach((product, index) => {
+                    if (index < 5) { // 只记录前5个产品用于调试
+                        console.log(`产品 ${index + 1}:`, product);
+                    }
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${product.batch_number}</td>
+                        <td>${product.product_code}</td>
+                        <td>${product.external_final_judgment || 'N/A'}</td>
+                        <td>${product.internal_final_judgment || 'N/A'}</td>
+                        <td>${product.judgment_status || 'N/A'}</td>
+                    `;
+                    tbody.appendChild(row);
+                    rowCount++;
+                });
+                console.log(`成功添加了 ${rowCount} 行到表格中`);
+                
+                // 检查表格是否可见
+                const tableContainer = tbody.closest('.table-responsive');
+                console.log('表格容器:', tableContainer);
+                console.log('表格容器高度:', tableContainer?.offsetHeight);
+                console.log('表格容器滚动高度:', tableContainer?.scrollHeight);
+            } else {
+                console.log('没有找到产品数据');
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="6" class="text-center text-muted">暂无数据</td>';
+                tbody.appendChild(row);
+            }
+        }
+
+        function updateChart(data) {
+            const ctx = document.getElementById('qualityChart').getContext('2d');
+            
+            // 销毁旧图表
+            if (qualityChart) {
+                qualityChart.destroy();
+            }
+
+            // 创建新图表
+            qualityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: document.getElementById('testItem').selectedOptions[0].text,
+                        data: data.data,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: '质量趋势分析'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateStatistics(stats) {
+            const statsDiv = document.getElementById('statisticsInfo');
+            statsDiv.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>平均值:</strong> ${stats.average.toFixed(4)}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>标准差:</strong> ${stats.std_dev.toFixed(4)}
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">标准差辅助线: ±σ, ±2σ, ±3σ, ±4σ, ±5σ</small>
+                </div>
+            `;
+        }
+
+        function updateMRChart(data) {
+            const ctx = document.getElementById('mrChart').getContext('2d');
+            
+            // 销毁旧图表
+            if (mrChart) {
+                mrChart.destroy();
+            }
+
+            // 创建移动极差图
+            mrChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: '移动极差',
+                            data: data.moving_ranges,
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            tension: 0.1,
+                            fill: true
+                        },
+                        {
+                            label: '移动极差平均值',
+                            data: Array(data.labels.length).fill(data.statistics.mr_average),
+                            borderColor: 'rgb(54, 162, 235)',
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 0
+                        },
+                        {
+                            label: '上控制限 (UCL)',
+                            data: Array(data.labels.length).fill(data.statistics.ucl_mr),
+                            borderColor: 'rgb(255, 0, 0)',
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '移动极差'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '批次/日期'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: '移动极差控制图 (MR Chart)'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateMRStatistics(stats) {
+            const statsDiv = document.getElementById('mrStatisticsInfo');
+            statsDiv.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>移动极差平均值 (MR):</strong> ${stats.mr_average.toFixed(4)}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>上控制限 (UCL):</strong> ${stats.ucl_mr.toFixed(4)}
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">移动极差控制图用于监控过程变异</small>
+                </div>
+            `;
+        }
+
+        function updateCapabilityChart(data) {
+            const ctx = document.getElementById('capabilityChart').getContext('2d');
+            
+            // 销毁旧图表
+            if (capabilityChart) {
+                capabilityChart.destroy();
+            }
+
+            // 创建能力分析图（直方图+正态分布曲线）
+            capabilityChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.histogram.bins.slice(0, -1).map((bin, index) => 
+                        `${bin.toFixed(2)} - ${data.histogram.bins[index + 1].toFixed(2)}`
+                    ),
+                    datasets: [
+                        {
+                            label: '数据分布',
+                            data: data.histogram.values,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '正态分布曲线',
+                            data: data.normal_distribution.y.map(y => y * 0.5), // 缩放以适应直方图
+                            type: 'line',
+                            borderColor: 'rgb(255, 99, 132)',
+                            borderWidth: 2,
+                            fill: false,
+                            pointRadius: 0,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '频率'
+                            }
+                        },
+                        y1: {
+                            position: 'right',
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '概率密度'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '数值区间'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: '能力分析 - 正态分布图'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCapabilityStatistics(stats) {
+            const statsDiv = document.getElementById('capabilityStatisticsInfo');
+            
+            let capabilityInfo = '';
+            if (stats.cp !== null && stats.cpk !== null) {
+                capabilityInfo = `
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>CP:</strong> ${stats.cp.toFixed(2)}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>CPK:</strong> ${stats.cpk.toFixed(2)}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>样本数:</strong> ${stats.sample_size}
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-4">
+                            <strong>上限 (USL):</strong> ${stats.usl !== null ? stats.usl.toFixed(2) : 'N/A'}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>下限 (LSL):</strong> ${stats.lsl !== null ? stats.lsl.toFixed(2) : 'N/A'}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>目标值:</strong> ${stats.target.toFixed(2)}
+                        </div>
+                    </div>
+                `;
+            } else {
+                capabilityInfo = `
+                    <div class="alert alert-warning">
+                        <strong>注意:</strong> 无法计算过程能力指数，请确保已设置产品标准限制
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>平均值:</strong> ${stats.mean.toFixed(4)}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>标准差:</strong> ${stats.std_dev.toFixed(4)}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            statsDiv.innerHTML = capabilityInfo;
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置默认日期为最近30天
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 30);
+            
+            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+            document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+            
+            // 初始加载所有图表数据
+            loadAllCharts();
+        });
+
+        // 计算合格率
+        function calculatePassRates(products) {
+            if (!products || products.length === 0) {
+                document.getElementById('internalControlRate').textContent = '0%';
+                document.getElementById('externalControlRate').textContent = '0%';
+                return;
+            }
+
+            // 计算内控合格率（只计算已完成判定的产品）
+            const internalControlProducts = products.filter(product => 
+                product.internal_final_judgment && 
+                (product.internal_final_judgment === '内控合格' || product.internal_final_judgment === '内控不合格')
+            );
+            const internalControlPass = internalControlProducts.filter(product => 
+                product.internal_final_judgment === '内控合格'
+            ).length;
+            const internalControlRate = internalControlProducts.length > 0 ? 
+                (internalControlPass / internalControlProducts.length * 100).toFixed(1) : 0;
+            
+            // 计算外控合格率（只计算已完成判定的产品）
+            const externalControlProducts = products.filter(product => 
+                product.external_final_judgment && 
+                (product.external_final_judgment === '外控合格' || product.external_final_judgment === '外控不合格')
+            );
+            const externalControlPass = externalControlProducts.filter(product => 
+                product.external_final_judgment === '外控合格'
+            ).length;
+            const externalControlRate = externalControlProducts.length > 0 ? 
+                (externalControlPass / externalControlProducts.length * 100).toFixed(1) : 0;
+
+            // 更新显示
+            document.getElementById('internalControlRate').textContent = `${internalControlRate}%`;
+            document.getElementById('externalControlRate').textContent = `${externalControlRate}%`;
+
+            // 根据合格率设置颜色
+            const internalControlElement = document.getElementById('internalControlRate');
+            const externalControlElement = document.getElementById('externalControlRate');
+            
+            internalControlElement.className = parseFloat(internalControlRate) >= 95 ? 
+                'text-success' : parseFloat(internalControlRate) >= 90 ? 
+                'text-warning' : 'text-danger';
+            
+            externalControlElement.className = parseFloat(externalControlRate) >= 95 ? 
+                'text-success' : parseFloat(externalControlRate) >= 90 ? 
+                'text-warning' : 'text-danger';
+        }
+
+        // 保持向后兼容
+        function loadChartData() {
+            loadAllCharts();
+        }
+    </script>
+</body>
+</html>
