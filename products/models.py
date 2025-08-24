@@ -198,6 +198,11 @@ class ProductStandard(models.Model):
         ('weight_avg_molecular_weight', '重均分子量'),
         ('pdi', 'PDI'),
         ('color', '色度'),
+        ('initial_tack', '初粘'),
+        ('peel_strength', '剥离'),
+        ('high_temperature_holding', '高温持粘'),
+        ('room_temperature_holding', '常温持粘'),
+        ('constant_load_peel', '定荷重剥离'),
     ]
     
     STANDARD_TYPES = [
@@ -258,3 +263,226 @@ class DryFilmProductHistory(models.Model):
     
     def __str__(self):
         return f"{self.dryfilm_product} - {self.modified_by} - {self.created_at}"
+
+
+class AdhesiveProduct(models.Model):
+    """胶粘剂产品模型"""
+    # 产品信息
+    product_code = models.CharField(max_length=50, verbose_name="产品牌号", default='default')
+    batch_number = models.CharField(max_length=50, verbose_name="产品批号", unique=True)
+    production_line = models.CharField(max_length=50, verbose_name="产线")
+    physical_inspector = models.CharField(max_length=50, verbose_name="理化检测人")
+    tape_inspector = models.CharField(max_length=50, verbose_name="胶带检测人")
+    tape_test_date = models.DateField(verbose_name="胶带测试日期")
+    physical_test_date = models.DateField(verbose_name="理化测试日期")
+    sample_category = models.CharField(max_length=50, verbose_name="样品类别")
+    remarks = models.TextField(blank=True, verbose_name="备注")
+    physical_judgment = models.CharField(max_length=20, verbose_name="理化性能判定", blank=True)
+    tape_judgment = models.CharField(max_length=20, verbose_name="胶带性能判定", blank=True)
+    final_judgment = models.CharField(max_length=20, verbose_name="最终判定", blank=True)
+    judgment_status = models.CharField(max_length=20, verbose_name="判定状态", default="待判定")
+    judgment_details = models.JSONField(verbose_name="判定详情", default=dict, blank=True)
+    
+    # 产品数据 - 理化性能
+    appearance = models.CharField(max_length=100, blank=True, verbose_name="外观")
+    solid_content = models.FloatField(null=True, blank=True, verbose_name="固含")
+    viscosity = models.FloatField(null=True, blank=True, verbose_name="粘度")
+    acid_value = models.FloatField(null=True, blank=True, verbose_name="酸值")
+    moisture = models.FloatField(null=True, blank=True, verbose_name="水分")
+    residual_monomer = models.FloatField(null=True, blank=True, verbose_name="残单")
+    weight_avg_molecular_weight = models.FloatField(null=True, blank=True, verbose_name="重均分子量")
+    pdi = models.FloatField(null=True, blank=True, verbose_name="PDI")
+    color = models.FloatField(null=True, blank=True, verbose_name="色度")
+    
+    # 产品数据 - 胶带性能
+    initial_tack = models.FloatField(null=True, blank=True, verbose_name="初粘")
+    peel_strength = models.FloatField(null=True, blank=True, verbose_name="剥离")
+    high_temperature_holding = models.FloatField(null=True, blank=True, verbose_name="高温持粘")
+    room_temperature_holding = models.FloatField(null=True, blank=True, verbose_name="常温持粘")
+    constant_load_peel = models.FloatField(null=True, blank=True, verbose_name="定荷重剥离")
+    
+    # 修改日志
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+    modified_by = models.CharField(max_length=50, verbose_name="修改人")
+    modification_reason = models.TextField(blank=True, verbose_name="修改原因")
+    
+    class Meta:
+        verbose_name = "胶粘剂产品"
+        verbose_name_plural = "胶粘剂产品"
+        ordering = ['-physical_test_date', 'batch_number']
+    
+    def __str__(self):
+        return f"{self.product_code} - {self.batch_number}"
+    
+    def save(self, *args, **kwargs):
+        # 检查是否是更新操作
+        is_update = self.pk is not None
+        
+        # 如果是更新操作，获取原始数据用于比较
+        if is_update:
+            try:
+                original_obj = AdhesiveProduct.objects.get(pk=self.pk)
+                changed_fields = []
+                modified_data = {}
+                
+                # 检查哪些字段被修改了
+                for field in self._meta.fields:
+                    field_name = field.name
+                    if field_name not in ['created_at', 'updated_at', 'modified_by', 'modification_reason']:
+                        original_value = getattr(original_obj, field_name)
+                        new_value = getattr(self, field_name)
+                        
+                        if original_value != new_value:
+                            # 格式化字段显示名称
+                            field_verbose = field.verbose_name if hasattr(field, 'verbose_name') else field_name
+                            changed_fields.append(f"{field_verbose}: {original_value} → {new_value}")
+                            modified_data[field_name] = {
+                                'old': original_value,
+                                'new': new_value
+                            }
+                
+                # 如果有字段被修改，创建历史记录
+                if changed_fields:
+                    # 自动生成修改描述
+                    if not self.modification_reason:
+                        self.modification_reason = f"自动检测到修改：{'; '.join(changed_fields)}"
+                    
+                    # 创建历史记录
+                    AdhesiveProductHistory.objects.create(
+                        adhesive_product=self,
+                        modified_by=self.modified_by if self.modified_by else 'system',
+                        modification_reason=self.modification_reason,
+                        modified_data=modified_data
+                    )
+                    
+            except AdhesiveProduct.DoesNotExist:
+                # 如果是新对象，不需要创建历史记录
+                pass
+        
+        # 自动计算判定结果
+        self.calculate_judgments()
+        super().save(*args, **kwargs)
+    
+    def calculate_judgments(self):
+        from products.models import ProductStandard
+        
+        # 获取标准
+        physical_standards = ProductStandard.objects.filter(
+            product_code=self.product_code, 
+            test_item__in=['appearance', 'solid_content', 'viscosity', 'acid_value', 
+                          'moisture', 'residual_monomer', 'weight_avg_molecular_weight', 
+                          'pdi', 'color']
+        )
+        
+        tape_standards = ProductStandard.objects.filter(
+            product_code=self.product_code, 
+            test_item__in=['initial_tack', 'peel_strength', 'high_temperature_holding', 
+                          'room_temperature_holding', 'constant_load_peel']
+        )
+        
+        judgment_details = {
+            'physical': {'standards_count': physical_standards.count(), 'unfinished_items': [], 'failed_items': []},
+            'tape': {'standards_count': tape_standards.count(), 'unfinished_items': [], 'failed_items': []}
+        }
+        
+        # 理化性能判定
+        if physical_standards.exists():
+            has_unfinished = False
+            all_qualified = True
+            
+            for standard in physical_standards:
+                actual_value = getattr(self, standard.test_item, None)
+                
+                # 检查数据完整性
+                if actual_value is None or (isinstance(actual_value, (int, float)) and actual_value == 0):
+                    has_unfinished = True
+                    judgment_details['physical']['unfinished_items'].append(standard.test_item)
+                    continue
+                    
+                # 检查合格性
+                if not (standard.lower_limit <= actual_value <= standard.upper_limit):
+                    all_qualified = False
+                    judgment_details['physical']['failed_items'].append({
+                        'item': standard.test_item,
+                        'value': actual_value,
+                        'lower_limit': standard.lower_limit,
+                        'upper_limit': standard.upper_limit
+                    })
+            
+            if has_unfinished:
+                self.physical_judgment = "理化未完成"
+                self.judgment_status = "待判定"
+            elif all_qualified:
+                self.physical_judgment = "理化合格"
+            else:
+                self.physical_judgment = "理化不合格"
+        else:
+            self.physical_judgment = "无理化标准"
+        
+        # 胶带性能判定
+        if tape_standards.exists():
+            has_unfinished = False
+            all_qualified = True
+            
+            for standard in tape_standards:
+                actual_value = getattr(self, standard.test_item, None)
+                
+                # 检查数据完整性
+                if actual_value is None or (isinstance(actual_value, (int, float)) and actual_value == 0):
+                    has_unfinished = True
+                    judgment_details['tape']['unfinished_items'].append(standard.test_item)
+                    continue
+                    
+                # 检查合格性
+                if not (standard.lower_limit <= actual_value <= standard.upper_limit):
+                    all_qualified = False
+                    judgment_details['tape']['failed_items'].append({
+                        'item': standard.test_item,
+                        'value': actual_value,
+                        'lower_limit': standard.lower_limit,
+                        'upper_limit': standard.upper_limit
+                    })
+            
+            if has_unfinished:
+                self.tape_judgment = "胶带未完成"
+                self.judgment_status = "待判定"
+            elif all_qualified:
+                self.tape_judgment = "胶带合格"
+            else:
+                self.tape_judgment = "胶带不合格"
+        else:
+            self.tape_judgment = "无胶带标准"
+        
+        # 最终判定
+        if self.physical_judgment == "理化合格" and self.tape_judgment == "胶带合格":
+            self.final_judgment = "合格"
+            self.judgment_status = "已完成"
+        elif "不合格" in self.physical_judgment or "不合格" in self.tape_judgment:
+            self.final_judgment = "不合格"
+            self.judgment_status = "已完成"
+        elif "未完成" in self.physical_judgment or "未完成" in self.tape_judgment:
+            self.final_judgment = "未完成"
+            self.judgment_status = "待判定"
+        else:
+            self.final_judgment = "待判定"
+            self.judgment_status = "待判定"
+        
+        self.judgment_details = judgment_details
+
+
+class AdhesiveProductHistory(models.Model):
+    """胶粘剂产品修改历史记录"""
+    adhesive_product = models.ForeignKey(AdhesiveProduct, on_delete=models.CASCADE, verbose_name="胶粘剂产品")
+    modified_by = models.CharField(max_length=50, verbose_name="修改人")
+    modification_reason = models.TextField(verbose_name="修改原因")
+    modified_data = models.JSONField(verbose_name="修改数据", default=dict)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="修改时间")
+    
+    class Meta:
+        verbose_name = "胶粘剂产品修改历史"
+        verbose_name_plural = "胶粘剂产品修改历史"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.adhesive_product} - {self.modified_by} - {self.created_at}"
