@@ -1,247 +1,197 @@
 #!/usr/bin/env python3
 """
-API测试脚本 - 用于验证新的首页功能API端点
+API功能测试 - 验证项目核心API接口
 """
 
-import requests
+import os
+import django
+import sys
 import json
-from datetime import datetime, timedelta
+from django.test import TestCase, Client
+from django.urls import reverse
 
-BASE_URL = "http://127.0.0.1:8000"
+# 添加项目路径到系统路径
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'quality_control.settings')
+django.setup()
 
-def test_dryfilm_chart_data_api():
-    """测试干膜产品图表数据API"""
-    print("测试干膜产品图表数据API...")
-    try:
-        # 构建查询参数
+from products.models import DryFilmProduct, AdhesiveProduct, ProductStandard
+
+class APITestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+        
+    def test_get_product_data_dryfilm(self):
+        """测试获取干膜产品数据API"""
+        print("测试干膜产品数据API...")
+        
+        # 获取一个存在的产品代码
+        sample_product = DryFilmProduct.objects.first()
+        if not sample_product:
+            print("没有干膜产品数据，跳过测试")
+            return
+            
+        url = reverse('product_chart_data', args=['dryfilm'])
         params = {
-            'test_item': 'solid_content',
-            'start_date': (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'),
-            'end_date': datetime.now().strftime('%Y-%m-%d')
+            'product_code': sample_product.product_code,
+            'test_item': 'solid_content'
         }
         
-        response = requests.get(f"{BASE_URL}/api/products/dryfilm/chart-data/", params=params)
-        print(f"状态码: {response.status_code}")
+        response = self.client.get(url, params)
+        self.assertEqual(response.status_code, 200)
         
-        if response.status_code == 200:
-            data = response.json()
-            print(f"返回数据: {json.dumps(data, indent=2, ensure_ascii=False)}")
-            return True
-        else:
-            print(f"错误: {response.text}")
-            return False
+        data = response.json()
+        self.assertIn('labels', data)
+        self.assertIn('data', data)
+        self.assertIn('statistics', data)
+        
+        print(f"干膜API测试通过: 返回 {len(data['labels'])} 个数据点")
+        
+    def test_get_product_data_adhesive(self):
+        """测试获取胶粘剂产品数据API"""
+        print("测试胶粘剂产品数据API...")
+        
+        # 获取一个存在的产品代码
+        sample_product = AdhesiveProduct.objects.first()
+        if not sample_product:
+            print("没有胶粘剂产品数据，跳过测试")
+            return
             
-    except Exception as e:
-        print(f"测试失败: {e}")
-        return False
-
-def test_adhesive_chart_data_api():
-    """测试胶粘剂产品图表数据API"""
-    print("测试胶粘剂产品图表数据API...")
-    try:
-        # 构建查询参数
+        url = reverse('product_chart_data', args=['adhesive'])
         params = {
-            'test_item': 'solid_content',
-            'start_date': (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'),
-            'end_date': datetime.now().strftime('%Y-%m-%d')
+            'product_code': sample_product.product_code,
+            'test_item': 'solid_content'
         }
         
-        response = requests.get(f"{BASE_URL}/api/products/adhesive/chart-data/", params=params)
-        print(f"状态码: {response.status_code}")
+        response = self.client.get(url, params)
+        self.assertEqual(response.status_code, 200)
         
-        if response.status_code == 200:
-            data = response.json()
-            print(f"返回数据: {json.dumps(data, indent=2, ensure_ascii=False)}")
-            return True
-        else:
-            print(f"错误: {response.text}")
-            return False
+        data = response.json()
+        self.assertIn('labels', data)
+        self.assertIn('data', data)
+        self.assertIn('statistics', data)
+        
+        print(f"胶粘剂API测试通过: 返回 {len(data['labels'])} 个数据点")
+        
+    def test_search_products_dryfilm(self):
+        """测试搜索干膜产品API"""
+        print("测试搜索干膜产品API...")
+        
+        url = reverse('product_search', args=['dryfilm'])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        
+        data = response.json()
+        self.assertIn('products', data)
+        
+        print(f"干膜搜索API测试通过: 找到 {len(data['products'])} 个产品")
+        
+    def test_search_products_adhesive(self):
+        """测试搜索胶粘剂产品API"""
+        print("测试搜索胶粘剂产品API...")
+        
+        url = reverse('product_search', args=['adhesive'])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        
+        data = response.json()
+        self.assertIn('products', data)
+        
+        print(f"胶粘剂搜索API测试通过: 找到 {len(data['products'])} 个产品")
+        
+    def test_moving_range_data(self):
+        """测试移动极差数据API"""
+        print("测试移动极差数据API...")
+        
+        # 获取一个存在的产品代码
+        sample_product = DryFilmProduct.objects.first()
+        if not sample_product:
+            print("没有产品数据，跳过测试")
+            return
             
-    except Exception as e:
-        print(f"测试失败: {e}")
-        return False
-
-def test_dryfilm_search_products_api():
-    """测试干膜产品查询API"""
-    print("\n测试干膜产品查询API...")
-    try:
+        url = reverse('product_moving_range', args=['dryfilm'])
         params = {
-            'start_date': (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'),
-            'end_date': datetime.now().strftime('%Y-%m-%d')
+            'product_code': sample_product.product_code,
+            'test_item': 'solid_content'
         }
         
-        response = requests.get(f"{BASE_URL}/api/products/dryfilm/search/", params=params)
-        print(f"状态码: {response.status_code}")
+        response = self.client.get(url, params)
+        self.assertEqual(response.status_code, 200)
         
-        if response.status_code == 200:
-            data = response.json()
-            print(f"找到 {len(data.get('products', []))} 个干膜产品")
-            return True
-        else:
-            print(f"错误: {response.text}")
-            return False
+        data = response.json()
+        self.assertIn('labels', data)
+        self.assertIn('data_values', data)
+        self.assertIn('moving_ranges', data)
+        self.assertIn('statistics', data)
+        
+        print(f"移动极差API测试通过: 返回 {len(data['data_values'])} 个数据点")
+        
+    def test_capability_analysis_data(self):
+        """测试能力分析数据API"""
+        print("测试能力分析数据API...")
+        
+        # 获取一个存在的产品代码
+        sample_product = DryFilmProduct.objects.first()
+        if not sample_product:
+            print("没有产品数据，跳过测试")
+            return
             
-    except Exception as e:
-        print(f"测试失败: {e}")
-        return False
-
-def test_adhesive_search_products_api():
-    """测试胶粘剂产品查询API"""
-    print("\n测试胶粘剂产品查询API...")
-    try:
+        url = reverse('product_capability_analysis', args=['dryfilm'])
         params = {
-            'start_date': (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'),
-            'end_date': datetime.now().strftime('%Y-%m-%d')
+            'product_code': sample_product.product_code,
+            'test_item': 'solid_content'
         }
         
-        response = requests.get(f"{BASE_URL}/api/products/adhesive/search/", params=params)
-        print(f"状态码: {response.status_code}")
+        response = self.client.get(url, params)
+        self.assertEqual(response.status_code, 200)
         
-        if response.status_code == 200:
-            data = response.json()
-            print(f"找到 {len(data.get('products', []))} 个胶粘剂产品")
-            return True
-        else:
-            print(f"错误: {response.text}")
-            return False
-            
-    except Exception as e:
-        print(f"测试失败: {e}")
-        return False
+        data = response.json()
+        self.assertIn('histogram', data)
+        self.assertIn('normal_distribution', data)
+        self.assertIn('statistics', data)
+        
+        print(f"能力分析API测试通过: 返回统计数据和分布信息")
 
-def test_dryfilm_moving_range_api():
-    """测试干膜产品移动极差API"""
-    print("\n测试干膜产品移动极差API...")
-    try:
-        params = {
-            'test_item': 'solid_content',
-            'start_date': (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'),
-            'end_date': datetime.now().strftime('%Y-%m-%d')
-        }
-        
-        response = requests.get(f"{BASE_URL}/api/products/dryfilm/moving-range/", params=params)
-        print(f"状态码: {response.status_code}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            print(f"干膜产品移动极差数据获取成功")
-            return True
-        else:
-            print(f"错误: {response.text}")
-            return False
-            
-    except Exception as e:
-        print(f"测试失败: {e}")
-        return False
-
-def test_adhesive_moving_range_api():
-    """测试胶粘剂产品移动极差API"""
-    print("\n测试胶粘剂产品移动极差API...")
-    try:
-        params = {
-            'test_item': 'solid_content',
-            'start_date': (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'),
-            'end_date': datetime.now().strftime('%Y-%m-%d')
-        }
-        
-        response = requests.get(f"{BASE_URL}/api/products/adhesive/moving-range/", params=params)
-        print(f"状态码: {response.status_code}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            print(f"胶粘剂产品移动极差数据获取成功")
-            return True
-        else:
-            print(f"错误: {response.text}")
-            return False
-            
-    except Exception as e:
-        print(f"测试失败: {e}")
-        return False
-
-def test_dryfilm_capability_analysis_api():
-    """测试干膜产品能力分析API"""
-    print("\n测试干膜产品能力分析API...")
-    try:
-        params = {
-            'test_item': 'solid_content',
-            'start_date': (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'),
-            'end_date': datetime.now().strftime('%Y-%m-%d')
-        }
-        
-        response = requests.get(f"{BASE_URL}/api/products/dryfilm/capability-analysis/", params=params)
-        print(f"状态码: {response.status_code}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            print(f"干膜产品能力分析数据获取成功")
-            return True
-        else:
-            print(f"错误: {response.text}")
-            return False
-            
-    except Exception as e:
-        print(f"测试失败: {e}")
-        return False
-
-def test_adhesive_capability_analysis_api():
-    """测试胶粘剂产品能力分析API"""
-    print("\n测试胶粘剂产品能力分析API...")
-    try:
-        params = {
-            'test_item': 'solid_content',
-            'start_date': (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'),
-            'end_date': datetime.now().strftime('%Y-%m-%d')
-        }
-        
-        response = requests.get(f"{BASE_URL}/api/products/adhesive/capability-analysis/", params=params)
-        print(f"状态码: {response.status_code}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            print(f"胶粘剂产品能力分析数据获取成功")
-            return True
-        else:
-            print(f"错误: {response.text}")
-            return False
-            
-    except Exception as e:
-        print(f"测试失败: {e}")
-        return False
-
-if __name__ == "__main__":
-    print("=" * 50)
-    print("质检管理系统API测试")
-    print("=" * 50)
+def run_api_tests():
+    """运行所有API测试"""
+    print("=" * 60)
+    print("质检管理系统API功能测试")
+    print("=" * 60)
     
-    # 运行所有测试
+    # 创建测试实例
+    test_case = APITestCase()
+    test_case.setUp()
+    
     tests = [
-        test_dryfilm_chart_data_api,
-        test_adhesive_chart_data_api,
-        test_dryfilm_search_products_api,
-        test_adhesive_search_products_api,
-        test_dryfilm_moving_range_api,
-        test_adhesive_moving_range_api,
-        test_dryfilm_capability_analysis_api,
-        test_adhesive_capability_analysis_api
+        test_case.test_get_product_data_dryfilm,
+        test_case.test_get_product_data_adhesive,
+        test_case.test_search_products_dryfilm,
+        test_case.test_search_products_adhesive,
+        test_case.test_moving_range_data,
+        test_case.test_capability_analysis_data
     ]
     
     results = []
     for test in tests:
-        results.append(test())
+        try:
+            test()
+            results.append(True)
+        except Exception as e:
+            print(f"测试 {test.__name__} 失败: {e}")
+            results.append(False)
     
-    print("\n" + "=" * 50)
-    print("测试结果汇总:")
-    print("=" * 50)
+    print("\n" + "=" * 60)
+    print("API测试结果汇总:")
+    print("=" * 60)
     
     for i, result in enumerate(results):
         status = "✓ 通过" if result else "✗ 失败"
         print(f"{tests[i].__name__}: {status}")
     
     all_passed = all(results)
-    print(f"\n总体结果: {'所有测试通过!' if all_passed else '部分测试失败!'}")
+    print(f"\n总体结果: {'所有API测试通过!' if all_passed else '部分API测试失败!'}")
     
-    if all_passed:
-        print("\n可以访问 http://127.0.0.1:8000 查看新的首页功能")
-    else:
-        print("\n请检查数据库是否有测试数据，或查看服务器日志获取详细信息")
+    return all_passed
+
+if __name__ == "__main__":
+    run_api_tests()

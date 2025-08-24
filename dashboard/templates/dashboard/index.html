@@ -556,7 +556,7 @@
                         </div>
                     </div>
 
-                    <!-- 数据表格窗口 -->
+                    <!-- 图形窗口 -->
                     <div class="col-lg-8 col-md-6">
                         <!-- 原料数据表格 -->
                         <div class="card">
@@ -564,7 +564,7 @@
                                 <h5 class="mb-0">原料数据表</h5>
                             </div>
                             <div class="card-body">
-                                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
                                     <table class="table table-sm table-striped table-hover">
                                         <thead class="table-light">
                                             <tr>
@@ -594,10 +594,10 @@
                             </div>
                         </div>
 
-                        <!-- 原料质量趋势图（新版） -->
+                        <!-- 原料质量趋势图 -->
                         <div class="card mt-4">
-                            <div class="card-header bg-success text-white">
-                                <h5 class="mb-0">原料质量趋势分析</h5>
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">原料质量趋势图</h5>
                             </div>
                             <div class="card-body">
                                 <div class="loading" id="rawMaterialChartLoading">
@@ -607,10 +607,52 @@
                                     <p class="mt-2">正在生成图表...</p>
                                 </div>
                                 <div class="chart-container">
-                                    <canvas id="rawMaterialTrendChart"></canvas>
+                                    <canvas id="rawMaterialQualityChart"></canvas>
                                 </div>
-                                <div class="mt-3" id="rawMaterialChartInfo">
-                                    <!-- 图表信息将在这里显示 -->
+                                <div class="mt-3" id="rawMaterialStatisticsInfo">
+                                    <!-- 统计信息将在这里显示 -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 移动极差图 -->
+                        <div class="card mt-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">原料移动极差图 (MR Chart)</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="loading" id="rawMaterialMrChartLoading">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">加载中...</span>
+                                    </div>
+                                    <p class="mt-2">正在生成移动极差图...</p>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="rawMaterialMrChart"></canvas>
+                                </div>
+                                <div class="mt-3" id="rawMaterialMrStatisticsInfo">
+                                    <!-- 移动极差统计信息将在这里显示 -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 能力分析正态分布图 -->
+                        <div class="card mt-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">原料能力分析正态分布图</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="loading" id="rawMaterialCapabilityChartLoading">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">加载中...</span>
+                                    </div>
+                                    <p class="mt-2">正在生成能力分析图...</p>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="rawMaterialCapabilityChart"></canvas>
+                                </div>
+                                <div class="mt-3" id="rawMaterialCapabilityStatisticsInfo">
+                                    <!-- 能力分析统计信息将在这里显示 -->
                                 </div>
                             </div>
                         </div>
@@ -1650,8 +1692,10 @@
                 'text-warning' : 'text-danger';
         }
 
-        // 原料数据表相关功能
+        // 原料图表实例
         let rawMaterialQualityChart = null;
+        let rawMaterialMrChart = null;
+        let rawMaterialCapabilityChart = null;
         let currentRawMaterialPage = 1;
         const rawMaterialPageSize = 10;
 
@@ -1697,7 +1741,7 @@
                     console.error('Error loading raw material statistics:', error);
                 });
 
-            // 加载质量趋势图
+            // 构建图表查询参数
             const chartParams = new URLSearchParams();
             if (materialName) chartParams.append('material_name', materialName);
             if (supplier) chartParams.append('supplier', supplier);
@@ -1705,13 +1749,46 @@
             if (endDate) chartParams.append('end_date', endDate);
             chartParams.append('test_item', testItem);
 
+            // 加载质量趋势图
+            document.getElementById('rawMaterialChartLoading').style.display = 'block';
             fetch(`/raw-materials/api/charts/?${chartParams}`)
                 .then(response => response.json())
                 .then(data => {
                     updateRawMaterialQualityChart(data);
+                    updateRawMaterialStatisticsInfo(data);
+                    document.getElementById('rawMaterialChartLoading').style.display = 'none';
                 })
                 .catch(error => {
                     console.error('Error loading raw material chart data:', error);
+                    document.getElementById('rawMaterialChartLoading').style.display = 'none';
+                });
+
+            // 加载移动极差图
+            document.getElementById('rawMaterialMrChartLoading').style.display = 'block';
+            fetch(`/raw-materials/api/charts/?${chartParams}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateRawMaterialMRChart(data);
+                    updateRawMaterialMRStatisticsInfo(data);
+                    document.getElementById('rawMaterialMrChartLoading').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error loading raw material MR chart data:', error);
+                    document.getElementById('rawMaterialMrChartLoading').style.display = 'none';
+                });
+
+            // 加载能力分析图
+            document.getElementById('rawMaterialCapabilityChartLoading').style.display = 'block';
+            fetch(`/raw-materials/api/charts/?${chartParams}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateRawMaterialCapabilityChart(data);
+                    updateRawMaterialCapabilityStatisticsInfo(data);
+                    document.getElementById('rawMaterialCapabilityChartLoading').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error loading raw material capability chart data:', error);
+                    document.getElementById('rawMaterialCapabilityChartLoading').style.display = 'none';
                 });
         }
 
@@ -1847,7 +1924,7 @@
 
         // 更新原料质量趋势图
         function updateRawMaterialQualityChart(data) {
-            const ctx = document.getElementById('rawMaterialTrendChart').getContext('2d');
+            const ctx = document.getElementById('rawMaterialQualityChart').getContext('2d');
             
             // 销毁旧图表
             if (rawMaterialQualityChart) {
@@ -1855,6 +1932,11 @@
             }
             
             if (data.time_series && data.time_series.length > 0) {
+                // 计算统计信息
+                const values = data.time_series.map(item => item.value);
+                const mean = values.reduce((a, b) => a + b, 0) / values.length;
+                const stdDev = Math.sqrt(values.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / values.length);
+                
                 // 创建新图表
                 rawMaterialQualityChart = new Chart(ctx, {
                     type: 'line',
@@ -1917,13 +1999,12 @@
                     }
                 });
                 
-                // 更新图表信息
-                const chartInfoDiv = document.getElementById('rawMaterialChartInfo');
-                chartInfoDiv.innerHTML = `
-                    <div class="alert alert-info">
-                        <strong>图表信息:</strong> 显示 ${data.time_series.length} 个数据点，时间范围: ${data.time_series[0].date} 至 ${data.time_series[data.time_series.length - 1].date}
-                    </div>
-                `;
+                // 返回统计信息
+                return {
+                    mean: mean,
+                    stdDev: stdDev,
+                    count: values.length
+                };
             } else {
                 // 没有数据时显示提示
                 rawMaterialQualityChart = new Chart(ctx, {
@@ -1963,11 +2044,408 @@
                     }
                 });
                 
-                // 更新图表信息
-                const chartInfoDiv = document.getElementById('rawMaterialChartInfo');
-                chartInfoDiv.innerHTML = `
+                return null;
+            }
+        }
+
+        // 更新原料移动极差图
+        function updateRawMaterialMRChart(data) {
+            const ctx = document.getElementById('rawMaterialMrChart').getContext('2d');
+            
+            // 销毁旧图表
+            if (rawMaterialMrChart) {
+                rawMaterialMrChart.destroy();
+            }
+            
+            if (data.time_series && data.time_series.length > 1) {
+                // 计算移动极差
+                const movingRanges = [];
+                for (let i = 1; i < data.time_series.length; i++) {
+                    const range = Math.abs(data.time_series[i].value - data.time_series[i-1].value);
+                    movingRanges.push(range);
+                }
+                
+                // 计算移动极差统计
+                const mrAverage = movingRanges.reduce((a, b) => a + b, 0) / movingRanges.length;
+                const uclMr = 3.267 * mrAverage; // 移动极差图上控制限
+                
+                // 创建移动极差图
+                rawMaterialMrChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.time_series.slice(1).map(item => item.date.split('T')[0]),
+                        datasets: [
+                            {
+                                label: '移动极差',
+                                data: movingRanges,
+                                borderColor: 'rgb(255, 99, 132)',
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                tension: 0.1,
+                                fill: true
+                            },
+                            {
+                                label: '移动极差平均值',
+                                data: Array(movingRanges.length).fill(mrAverage),
+                                borderColor: 'rgb(54, 162, 235)',
+                                borderDash: [5, 5],
+                                fill: false,
+                                pointRadius: 0
+                            },
+                            {
+                                label: '上控制限 (UCL)',
+                                data: Array(movingRanges.length).fill(uclMr),
+                                borderColor: 'rgb(255, 0, 0)',
+                                borderDash: [5, 5],
+                                fill: false,
+                                pointRadius: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '移动极差'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '检测日期'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: '原料移动极差控制图 (MR Chart)'
+                            }
+                        }
+                    }
+                });
+                
+                return {
+                    mrAverage: mrAverage,
+                    uclMr: uclMr,
+                    count: movingRanges.length
+                };
+            } else {
+                // 没有足够数据时显示提示
+                rawMaterialMrChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['数据不足'],
+                        datasets: [{
+                            label: '无数据',
+                            data: [0],
+                            backgroundColor: 'rgba(200, 200, 200, 0.5)',
+                            borderColor: 'rgba(200, 200, 200, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { 
+                                beginAtZero: true,
+                                display: false
+                            },
+                            x: {
+                                display: false
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            title: {
+                                display: true,
+                                text: '移动极差图需要至少2个数据点'
+                            },
+                            tooltip: {
+                                enabled: false
+                            }
+                        }
+                    }
+                });
+                
+                return null;
+            }
+        }
+
+        // 更新原料能力分析正态分布图
+        function updateRawMaterialCapabilityChart(data) {
+            const ctx = document.getElementById('rawMaterialCapabilityChart').getContext('2d');
+            
+            // 销毁旧图表
+            if (rawMaterialCapabilityChart) {
+                rawMaterialCapabilityChart.destroy();
+            }
+            
+            if (data.distribution && data.distribution.length > 0) {
+                // 提取分布数据
+                const bins = data.distribution.map(item => (item.bin_start + item.bin_end) / 2);
+                const frequencies = data.distribution.map(item => item.count);
+                
+                // 计算正态分布曲线
+                const values = data.time_series.map(item => item.value);
+                const mean = values.reduce((a, b) => a + b, 0) / values.length;
+                const stdDev = Math.sqrt(values.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / values.length);
+                
+                // 创建正态分布曲线数据
+                const normalX = Array.from({length: 100}, (_, i) => 
+                    mean - 3 * stdDev + (6 * stdDev * i / 99)
+                );
+                const normalY = normalX.map(x => 
+                    (1 / (stdDev * Math.sqrt(2 * Math.PI))) * 
+                    Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2))
+                );
+                
+                // 缩放正态分布曲线以适应直方图
+                const maxFrequency = Math.max(...frequencies);
+                const maxDensity = Math.max(...normalY);
+                const scaleFactor = maxFrequency / maxDensity * 0.5;
+                
+                // 创建能力分析图
+                rawMaterialCapabilityChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.distribution.map(item => 
+                            `${item.bin_start.toFixed(2)} - ${item.bin_end.toFixed(2)}`
+                        ),
+                        datasets: [
+                            {
+                                label: '数据分布',
+                                data: frequencies,
+                                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: '正态分布曲线',
+                                data: normalY.map(y => y * scaleFactor),
+                                type: 'line',
+                                borderColor: 'rgb(255, 99, 132)',
+                                borderWidth: 2,
+                                fill: false,
+                                pointRadius: 0,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '频率'
+                                }
+                            },
+                            y1: {
+                                position: 'right',
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '概率密度'
+                                },
+                                grid: {
+                                    drawOnChartArea: false
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '数值区间'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: '原料能力分析 - 正态分布图'
+                            }
+                        }
+                    }
+                });
+                
+                return {
+                    mean: mean,
+                    stdDev: stdDev,
+                    count: values.length
+                };
+            } else {
+                // 没有数据时显示提示
+                rawMaterialCapabilityChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['暂无数据'],
+                        datasets: [{
+                            label: '无数据',
+                            data: [0],
+                            backgroundColor: 'rgba(200, 200, 200, 0.5)',
+                            borderColor: 'rgba(200, 200, 200, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { 
+                                beginAtZero: true,
+                                display: false
+                            },
+                            x: {
+                                display: false
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            title: {
+                                display: true,
+                                text: '暂无能力分析数据'
+                            },
+                            tooltip: {
+                                enabled: false
+                            }
+                        }
+                    }
+                });
+                
+                return null;
+            }
+        }
+
+        // 更新原料统计信息
+        function updateRawMaterialStatisticsInfo(data) {
+            const statsDiv = document.getElementById('rawMaterialStatisticsInfo');
+            
+            if (data.time_series && data.time_series.length > 0) {
+                const values = data.time_series.map(item => item.value);
+                const mean = values.reduce((a, b) => a + b, 0) / values.length;
+                const stdDev = Math.sqrt(values.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / values.length);
+                
+                statsDiv.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>平均值:</strong> ${mean.toFixed(4)}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>标准差:</strong> ${stdDev.toFixed(4)}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>样本数:</strong> ${values.length}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>时间范围:</strong> ${data.time_series[0].date.split('T')[0]} 至 ${data.time_series[data.time_series.length - 1].date.split('T')[0]}
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">标准差辅助线: ±σ, ±2σ, ±3σ, ±4σ, ±5σ</small>
+                    </div>
+                `;
+            } else {
+                statsDiv.innerHTML = `
                     <div class="alert alert-warning">
                         <strong>注意:</strong> 当前筛选条件下没有找到质量趋势数据
+                    </div>
+                `;
+            }
+        }
+
+        // 更新原料移动极差统计信息
+        function updateRawMaterialMRStatisticsInfo(data) {
+            const statsDiv = document.getElementById('rawMaterialMrStatisticsInfo');
+            
+            if (data.time_series && data.time_series.length > 1) {
+                // 计算移动极差
+                const movingRanges = [];
+                for (let i = 1; i < data.time_series.length; i++) {
+                    const range = Math.abs(data.time_series[i].value - data.time_series[i-1].value);
+                    movingRanges.push(range);
+                }
+                
+                const mrAverage = movingRanges.reduce((a, b) => a + b, 0) / movingRanges.length;
+                const uclMr = 3.267 * mrAverage;
+                
+                statsDiv.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>移动极差平均值 (MR):</strong> ${mrAverage.toFixed(4)}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>上控制限 (UCL):</strong> ${uclMr.toFixed(4)}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>移动极差数量:</strong> ${movingRanges.length}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>数据点总数:</strong> ${data.time_series.length}
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">移动极差控制图用于监控过程变异，UCL = 3.267 × MR</small>
+                    </div>
+                `;
+            } else {
+                statsDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <strong>注意:</strong> 移动极差图需要至少2个数据点才能计算
+                    </div>
+                `;
+            }
+        }
+
+        // 更新原料能力分析统计信息
+        function updateRawMaterialCapabilityStatisticsInfo(data) {
+            const statsDiv = document.getElementById('rawMaterialCapabilityStatisticsInfo');
+            
+            if (data.time_series && data.time_series.length > 0) {
+                const values = data.time_series.map(item => item.value);
+                const mean = values.reduce((a, b) => a + b, 0) / values.length;
+                const stdDev = Math.sqrt(values.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / values.length);
+                
+                statsDiv.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>平均值:</strong> ${mean.toFixed(4)}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>标准差:</strong> ${stdDev.toFixed(4)}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>样本数:</strong> ${values.length}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>变异系数:</strong> ${(stdDev / mean * 100).toFixed(2)}%
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">正态分布曲线显示数据分布与理论正态分布的拟合程度</small>
+                    </div>
+                `;
+            } else {
+                statsDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <strong>注意:</strong> 当前筛选条件下没有找到能力分析数据
                     </div>
                 `;
             }
@@ -2024,7 +2502,5 @@
                 });
         }
     </script>
-</body>
-</html>
 </body>
 </html>
