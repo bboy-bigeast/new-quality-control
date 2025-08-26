@@ -65,9 +65,9 @@
         <div class="container-fluid">
             <ul class="nav">
                 <li class="nav-item">
-                    <a class="nav-link {% if 'raw_materials' in request.resolver_match.namespace %}active{% endif %}" 
-                       href="{% url 'raw_materials:raw_material_list' %}">
-                        <i class="fas fa-box"></i> 原料管理
+                    <a class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}" 
+                       href="{% url 'dashboard_index' %}">
+                        <i class="fas fa-home"></i> 首页
                     </a>
                 </li>
                 <li class="nav-item">
@@ -103,8 +103,8 @@
                            href="{% url 'reports:create_report' %}">
                             <i class="fas fa-file-medical"></i> 创建报告
                         </a>
-                        <a class="nav-link" href="{% url 'raw_materials:raw_material_list' %}">
-                            <i class="fas fa-arrow-left"></i> 返回原料管理
+                        <a class="nav-link" href="{% url 'dashboard_index' %}">
+                            <i class="fas fa-home"></i> 首页
                         </a>
                     </nav>
                 </div>
