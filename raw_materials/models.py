@@ -60,7 +60,7 @@ class RawMaterial(models.Model):
     ]
     
     material_name = models.CharField(max_length=100, verbose_name='原料名称')
-    material_batch = models.CharField(max_length=50, unique=True, verbose_name='原料批号')
+    material_batch = models.CharField(max_length=50, verbose_name='原料批号')
     inspector = models.CharField(max_length=50, verbose_name='检测人')
     sample_category = models.CharField(max_length=50, choices=SAMPLE_CATEGORY_CHOICES, verbose_name='样品类别')
     test_date = models.DateField(verbose_name='测试日期')
