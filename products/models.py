@@ -4,7 +4,7 @@ import json
 
 class DryFilmProduct(models.Model):
     # 产品信息
-    product_code = models.CharField(max_length=50, verbose_name="产品牌号", default = 'default')
+    product_code = models.CharField(max_length=50, verbose_name="产品牌号", blank=True)
     batch_number = models.CharField(max_length=50, verbose_name="产品批号", unique=True)
     production_line = models.CharField(max_length=50, verbose_name="产线")
     inspector = models.CharField(max_length=50, verbose_name="检测人")
@@ -125,15 +125,18 @@ class DryFilmProduct(models.Model):
                     judgment_details['external']['unfinished_items'].append(standard.test_item)
                     continue
                     
-                # 检查合格性
-                if not (standard.lower_limit <= actual_value <= standard.upper_limit):
-                    all_qualified = False
-                    judgment_details['external']['failed_items'].append({
-                        'item': standard.test_item,
-                        'value': actual_value,
-                        'lower_limit': standard.lower_limit,
-                        'upper_limit': standard.upper_limit
-                    })
+                # 检查合格性 - 只有在actual_value和标准限制都不为None时才进行比较
+                if (actual_value is not None and 
+                    standard.lower_limit is not None and 
+                    standard.upper_limit is not None):
+                    if not (standard.lower_limit <= actual_value <= standard.upper_limit):
+                        all_qualified = False
+                        judgment_details['external']['failed_items'].append({
+                            'item': standard.test_item,
+                            'value': actual_value,
+                            'lower_limit': standard.lower_limit,
+                            'upper_limit': standard.upper_limit
+                        })
             
             if has_unfinished:
                 self.external_final_judgment = "外控未完成"
@@ -162,15 +165,18 @@ class DryFilmProduct(models.Model):
                     judgment_details['internal']['unfinished_items'].append(standard.test_item)
                     continue
                     
-                # 检查合格性
-                if not (standard.lower_limit <= actual_value <= standard.upper_limit):
-                    all_qualified = False
-                    judgment_details['internal']['failed_items'].append({
-                        'item': standard.test_item,
-                        'value': actual_value,
-                        'lower_limit': standard.lower_limit,
-                        'upper_limit': standard.upper_limit
-                    })
+                # 检查合格性 - 只有在actual_value和标准限制都不为None时才进行比较
+                if (actual_value is not None and 
+                    standard.lower_limit is not None and 
+                    standard.upper_limit is not None):
+                    if not (standard.lower_limit <= actual_value <= standard.upper_limit):
+                        all_qualified = False
+                        judgment_details['internal']['failed_items'].append({
+                            'item': standard.test_item,
+                            'value': actual_value,
+                            'lower_limit': standard.lower_limit,
+                            'upper_limit': standard.upper_limit
+                        })
             
             if has_unfinished:
                 self.internal_final_judgment = "内控未完成"
@@ -210,7 +216,7 @@ class ProductStandard(models.Model):
         ('internal_control', '内控标准'),
     ]
     
-    product_code = models.CharField(max_length=50, verbose_name="产品牌号", default="DF-100")
+    product_code = models.CharField(max_length=50, verbose_name="产品牌号", blank=True)
     test_item = models.CharField(max_length=50, choices=TEST_ITEMS, verbose_name="检测项目")
     standard_type = models.CharField(max_length=20, choices=STANDARD_TYPES, verbose_name="标准类型")
     lower_limit = models.FloatField(null=True, blank=True, verbose_name="下限")
@@ -221,6 +227,7 @@ class ProductStandard(models.Model):
     test_condition = models.CharField(max_length=200, blank=True, verbose_name="检测条件")
     unit = models.CharField(max_length=50, blank=True, verbose_name="单位")
     analysis_method = models.CharField(max_length=200, blank=True, verbose_name="分析方法/标准")
+    text_standard = models.TextField(blank=True, verbose_name="文本标准")
     
     # 修改日志
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
@@ -273,7 +280,7 @@ class DryFilmProductHistory(models.Model):
 class AdhesiveProduct(models.Model):
     """胶粘剂产品模型"""
     # 产品信息
-    product_code = models.CharField(max_length=50, verbose_name="产品牌号", default='default')
+    product_code = models.CharField(max_length=50, verbose_name="产品牌号", blank=True)
     batch_number = models.CharField(max_length=50, verbose_name="产品批号", unique=True)
     production_line = models.CharField(max_length=50, verbose_name="产线")
     physical_inspector = models.CharField(max_length=50, verbose_name="理化检测人")
@@ -405,15 +412,18 @@ class AdhesiveProduct(models.Model):
                     judgment_details['physical']['unfinished_items'].append(standard.test_item)
                     continue
                     
-                # 检查合格性
-                if not (standard.lower_limit <= actual_value <= standard.upper_limit):
-                    all_qualified = False
-                    judgment_details['physical']['failed_items'].append({
-                        'item': standard.test_item,
-                        'value': actual_value,
-                        'lower_limit': standard.lower_limit,
-                        'upper_limit': standard.upper_limit
-                    })
+                # 检查合格性 - 只有在actual_value和标准限制都不为None时才进行比较
+                if (actual_value is not None and 
+                    standard.lower_limit is not None and 
+                    standard.upper_limit is not None):
+                    if not (standard.lower_limit <= actual_value <= standard.upper_limit):
+                        all_qualified = False
+                        judgment_details['physical']['failed_items'].append({
+                            'item': standard.test_item,
+                            'value': actual_value,
+                            'lower_limit': standard.lower_limit,
+                            'upper_limit': standard.upper_limit
+                        })
             
             if has_unfinished:
                 self.physical_judgment = "理化未完成"
@@ -439,15 +449,18 @@ class AdhesiveProduct(models.Model):
                     judgment_details['tape']['unfinished_items'].append(standard.test_item)
                     continue
                     
-                # 检查合格性
-                if not (standard.lower_limit <= actual_value <= standard.upper_limit):
-                    all_qualified = False
-                    judgment_details['tape']['failed_items'].append({
-                        'item': standard.test_item,
-                        'value': actual_value,
-                        'lower_limit': standard.lower_limit,
-                        'upper_limit': standard.upper_limit
-                    })
+                # 检查合格性 - 只有在actual_value和标准限制都不为None时才进行比较
+                if (actual_value is not None and 
+                    standard.lower_limit is not None and 
+                    standard.upper_limit is not None):
+                    if not (standard.lower_limit <= actual_value <= standard.upper_limit):
+                        all_qualified = False
+                        judgment_details['tape']['failed_items'].append({
+                            'item': standard.test_item,
+                            'value': actual_value,
+                            'lower_limit': standard.lower_limit,
+                            'upper_limit': standard.upper_limit
+                        })
             
             if has_unfinished:
                 self.tape_judgment = "胶带未完成"
@@ -496,7 +509,7 @@ class AdhesiveProductHistory(models.Model):
 class PilotProduct(models.Model):
     """小试产品模型"""
     # 产品信息
-    product_code = models.CharField(max_length=50, verbose_name="产品牌号", default='小试产品')
+    product_code = models.CharField(max_length=50, verbose_name="产品牌号", blank=True)
     batch_number = models.CharField(max_length=50, verbose_name="产品批号", unique=True)
     production_line = models.CharField(max_length=50, verbose_name="产线")
     inspector = models.CharField(max_length=50, verbose_name="检测人")

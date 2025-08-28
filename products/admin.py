@@ -1,16 +1,18 @@
 from django.contrib import admin
+from django.contrib import messages
 from .models import DryFilmProduct, ProductStandard, ProductStandardHistory, DryFilmProductHistory, AdhesiveProduct, AdhesiveProductHistory, PilotProduct, PilotProductHistory
 
 @admin.register(DryFilmProduct)
 class DryFilmProductAdmin(admin.ModelAdmin):
+    actions = ['update_judgments_action']
     list_display = [
         'product_code', 'batch_number', 'production_line', 'inspector', 
         'test_date', 'external_final_judgment', 'internal_final_judgment',
         'judgment_status'
     ]
     list_filter = [
-        'production_line', 'test_date', 'external_final_judgment', 
-        'internal_final_judgment', 'judgment_status'
+        'product_code', 'batch_number', 'production_line', 'test_date', 
+        'external_final_judgment', 'internal_final_judgment', 'judgment_status'
     ]
     search_fields = ['product_code', 'batch_number', 'inspector']
     date_hierarchy = 'test_date'
@@ -232,12 +234,37 @@ class DryFilmProductAdmin(admin.ModelAdmin):
         
         return super().change_view(request, object_id, form_url, extra_context)
 
+    def update_judgments_action(self, request, queryset):
+        """批量更新选定干膜产品记录的判定结果"""
+        from django.db import transaction
+        import time
+        
+        start_time = time.time()
+        updated_count = 0
+        
+        # 使用事务确保数据一致性
+        with transaction.atomic():
+            for product in queryset:
+                # 调用save方法会自动触发calculate_final_judgments()
+                product.save()
+                updated_count += 1
+        
+        elapsed_time = time.time() - start_time
+        
+        self.message_user(
+            request,
+            f'成功更新 {updated_count} 条干膜产品记录的判定结果 (耗时: {elapsed_time:.2f}秒)',
+            messages.SUCCESS
+        )
+    
+    update_judgments_action.short_description = "更新选定记录的判定结果"
+
 
 @admin.register(ProductStandard)
 class ProductStandardAdmin(admin.ModelAdmin):
     list_display = [
         'product_code', 'test_item', 'standard_type', 
-        'lower_limit', 'upper_limit', 'target_value',
+        'lower_limit', 'upper_limit', 'target_value', 'text_standard',
         'test_condition', 'unit', 'analysis_method'
     ]
     list_filter = ['product_code', 'standard_type', 'test_item']
@@ -249,7 +276,7 @@ class ProductStandardAdmin(admin.ModelAdmin):
             'fields': ('product_code', 'test_item', 'standard_type')
         }),
         ('标准值', {
-            'fields': ('lower_limit', 'upper_limit', 'target_value')
+            'fields': ('lower_limit', 'upper_limit', 'target_value', 'text_standard')
         }),
         ('检测信息', {
             'fields': ('test_condition', 'unit', 'analysis_method')
@@ -344,7 +371,7 @@ class ProductStandardAdmin(admin.ModelAdmin):
 @admin.register(ProductStandardHistory)
 class ProductStandardHistoryAdmin(admin.ModelAdmin):
     list_display = ['product_standard', 'modified_by', 'modification_reason', 'created_at']
-    list_filter = ['created_at', 'modified_by']
+    list_filter = ['created_at', 'modified_by', 'product_standard__product_code']
     search_fields = ['product_standard__product_code', 'modified_by', 'modification_reason']
     readonly_fields = ['product_standard', 'modified_by', 'modification_reason', 'modified_data', 'created_at']
     ordering = ['-created_at']
@@ -362,7 +389,7 @@ class ProductStandardHistoryAdmin(admin.ModelAdmin):
 @admin.register(DryFilmProductHistory)
 class DryFilmProductHistoryAdmin(admin.ModelAdmin):
     list_display = ['dryfilm_product', 'modified_by', 'modification_reason', 'created_at']
-    list_filter = ['created_at', 'modified_by']
+    list_filter = ['created_at', 'modified_by', 'dryfilm_product__product_code']
     search_fields = ['dryfilm_product__product_code', 'dryfilm_product__batch_number', 'modified_by', 'modification_reason']
     readonly_fields = ['dryfilm_product', 'modified_by', 'modification_reason', 'modified_data', 'created_at']
     ordering = ['-created_at']
@@ -379,13 +406,14 @@ class DryFilmProductHistoryAdmin(admin.ModelAdmin):
 
 @admin.register(AdhesiveProduct)
 class AdhesiveProductAdmin(admin.ModelAdmin):
+    actions = ['update_judgments_action']
     list_display = [
         'product_code', 'batch_number', 'production_line', 
         'physical_inspector', 'tape_inspector', 'physical_test_date',
         'physical_judgment', 'tape_judgment', 'final_judgment', 'judgment_status'
     ]
     list_filter = [
-        'production_line', 'physical_test_date', 'tape_test_date',
+        'product_code', 'batch_number', 'production_line', 'physical_test_date', 'tape_test_date',
         'physical_judgment', 'tape_judgment', 'final_judgment', 'judgment_status'
     ]
     search_fields = ['product_code', 'batch_number', 'physical_inspector', 'tape_inspector']
@@ -633,11 +661,36 @@ class AdhesiveProductAdmin(admin.ModelAdmin):
         
         return super().change_view(request, object_id, form_url, extra_context)
 
+    def update_judgments_action(self, request, queryset):
+        """批量更新选定胶粘剂产品记录的判定结果"""
+        from django.db import transaction
+        import time
+        
+        start_time = time.time()
+        updated_count = 0
+        
+        # 使用事务确保数据一致性
+        with transaction.atomic():
+            for product in queryset:
+                # 调用save方法会自动触发calculate_judgments()
+                product.save()
+                updated_count += 1
+        
+        elapsed_time = time.time() - start_time
+        
+        self.message_user(
+            request,
+            f'成功更新 {updated_count} 条胶粘剂产品记录的判定结果 (耗时: {elapsed_time:.2f}秒)',
+            messages.SUCCESS
+        )
+    
+    update_judgments_action.short_description = "更新选定记录的判定结果"
+
 
 @admin.register(AdhesiveProductHistory)
 class AdhesiveProductHistoryAdmin(admin.ModelAdmin):
     list_display = ['adhesive_product', 'modified_by', 'modification_reason', 'created_at']
-    list_filter = ['created_at', 'modified_by']
+    list_filter = ['created_at', 'modified_by', 'adhesive_product__product_code']
     search_fields = ['adhesive_product__product_code', 'adhesive_product__batch_number', 'modified_by', 'modification_reason']
     readonly_fields = ['adhesive_product', 'modified_by', 'modification_reason', 'modified_data', 'created_at']
     ordering = ['-created_at']
@@ -866,7 +919,7 @@ class PilotProductAdmin(admin.ModelAdmin):
 @admin.register(PilotProductHistory)
 class PilotProductHistoryAdmin(admin.ModelAdmin):
     list_display = ['pilot_product', 'modified_by', 'modification_reason', 'created_at']
-    list_filter = ['created_at', 'modified_by']
+    list_filter = ['created_at', 'modified_by', 'pilot_product__product_code']
     search_fields = ['pilot_product__product_code', 'pilot_product__batch_number', 'modified_by', 'modification_reason']
     readonly_fields = ['pilot_product', 'modified_by', 'modification_reason', 'modified_data', 'created_at']
     ordering = ['-created_at']

@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib import messages
 from django.utils.safestring import mark_safe
 from django import forms
 from django.urls import path, reverse
@@ -13,8 +14,9 @@ class RawMaterialAdmin(admin.ModelAdmin):
         'material_name', 'material_batch', 'supplier', 'inspector', 
         'test_date', 'final_judgment', 'judgment_status'
     ]
+    actions = ['update_judgments_action']
     list_filter = [
-        'material_name', 'supplier', 'test_date', 
+        'material_name', 'material_batch', 'supplier', 'test_date', 
         'final_judgment', 'judgment_status'
     ]
     search_fields = ['material_name', 'material_batch', 'supplier', 'inspector']
@@ -155,6 +157,31 @@ class RawMaterialAdmin(admin.ModelAdmin):
     
     copy_text.short_description = "复制文本"
     copy_text.allow_tags = True
+
+    def update_judgments_action(self, request, queryset):
+        """批量更新选定原料记录的判定结果"""
+        from django.db import transaction
+        import time
+        
+        start_time = time.time()
+        updated_count = 0
+        
+        # 使用事务确保数据一致性
+        with transaction.atomic():
+            for material in queryset:
+                # 调用save方法会自动触发calculate_judgment()
+                material.save()
+                updated_count += 1
+        
+        elapsed_time = time.time() - start_time
+        
+        self.message_user(
+            request,
+            f'成功更新 {updated_count} 条原料记录的判定结果 (耗时: {elapsed_time:.2f}秒)',
+            messages.SUCCESS
+        )
+    
+    update_judgments_action.short_description = "更新选定记录的判定结果"
     
     def save_model(self, request, obj, form, change):
         # 记录修改人信息
@@ -246,7 +273,7 @@ class RawMaterialAdmin(admin.ModelAdmin):
 @admin.register(RawMaterialHistory)
 class RawMaterialHistoryAdmin(admin.ModelAdmin):
     list_display = ['raw_material', 'modified_by', 'modification_reason', 'created_at']
-    list_filter = ['created_at', 'modified_by']
+    list_filter = ['raw_material__material_name', 'created_at', 'modified_by']
     search_fields = ['raw_material__material_name', 'raw_material__material_batch', 'modified_by', 'modification_reason']
     readonly_fields = ['raw_material', 'modified_by', 'modification_reason', 'modified_data', 'created_at']
     ordering = ['-created_at']
@@ -367,7 +394,7 @@ class RawMaterialStandardAdmin(admin.ModelAdmin):
 @admin.register(RawMaterialStandardHistory)
 class RawMaterialStandardHistoryAdmin(admin.ModelAdmin):
     list_display = ['raw_material_standard', 'modified_by', 'modification_reason', 'created_at']
-    list_filter = ['created_at', 'modified_by']
+    list_filter = ['raw_material_standard__material_name', 'created_at', 'modified_by']
     search_fields = ['raw_material_standard__material_name', 'modified_by', 'modification_reason']
     readonly_fields = ['raw_material_standard', 'modified_by', 'modification_reason', 'modified_data', 'created_at']
     ordering = ['-created_at']
