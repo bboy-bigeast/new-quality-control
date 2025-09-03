@@ -29,6 +29,8 @@ class DryFilmProduct(models.Model):
     polymerization_inhibitor = models.FloatField(null=True, blank=True, verbose_name="阻聚剂")
     conversion_rate = models.FloatField(null=True, blank=True, verbose_name="转化率")
     loading_temperature = models.FloatField(null=True, blank=True, verbose_name="装车温度")
+    dispersion = models.FloatField(null=True, blank=True, verbose_name="分散性")
+    stability = models.FloatField(null=True, blank=True, verbose_name="稳定性")
     
     # 修改日志
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
@@ -209,6 +211,8 @@ class ProductStandard(models.Model):
         ('high_temperature_holding', '高温持粘'),
         ('room_temperature_holding', '常温持粘'),
         ('constant_load_peel', '定荷重剥离'),
+        ('dispersion', '分散性'),
+        ('stability', '稳定性'),
     ]
     
     STANDARD_TYPES = [

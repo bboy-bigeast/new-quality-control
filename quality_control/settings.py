@@ -156,4 +156,14 @@ X_FRAME_OPTIONS = 'DENY'
 
 # Custom settings
 COMPANY_NAME = 'FSTEM 福斯特（安吉）新材料有限公司'
+
+# 报告版本配置
+REPORT_VERSIONS = {
+    'dryfilm': 'QR/AJF-QA-006-1 版次A/5',
+    'af11': 'QR/AJF-QA-006-1 版次A/5', 
+    'bb1': 'QR/AJF-QA-006-1 版次A/5',
+    'adhesive': 'QR/AJF-QA-006-2 版次A/1'
+}
+
+# 默认版本（向后兼容）
 REPORT_VERSION = 'QR/AJF-QA-006-1 版次A/4'

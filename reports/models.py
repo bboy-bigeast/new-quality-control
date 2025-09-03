@@ -7,6 +7,8 @@ class InspectionReport(models.Model):
     """检测报告模型"""
     REPORT_TYPES = [
         ('dryfilm', '干膜产品检测报告'),
+        ('af11', 'AF11产品检测报告'),
+        ('bb1', 'BB1产品检测报告'),
         ('adhesive', '胶粘剂产品检测报告'),
     ]
     
@@ -66,8 +68,8 @@ class InspectionReport(models.Model):
         if self.batch_number and not self.product_code:
             self._fill_product_info()
         
-        # 自动生成检测结果
-        if self.batch_number and self.selected_items and not self.test_results:
+        # 自动生成检测结果（包含产品模型中的所有检测项目）
+        if self.batch_number and not self.test_results:
             self._generate_test_results()
         
         super().save(*args, **kwargs)
@@ -75,7 +77,8 @@ class InspectionReport(models.Model):
     def _fill_product_info(self):
         """根据批号自动填充产品信息"""
         try:
-            if self.report_type == 'dryfilm':
+            if self.report_type in ['dryfilm', 'af11', 'bb1']:
+                # AF11和BB1产品也使用DryFilmProduct模型
                 product = DryFilmProduct.objects.get(batch_number=self.batch_number)
                 self.product_code = product.product_code
                 self.production_date = product.test_date
@@ -91,12 +94,13 @@ class InspectionReport(models.Model):
             pass
     
     def _generate_test_results(self):
-        """根据选择的检测项目生成检测结果"""
+        """根据用户选择的检测项目生成检测结果"""
         results = []
         
         try:
             # 获取产品数据
-            if self.report_type == 'dryfilm':
+            if self.report_type in ['dryfilm', 'af11', 'bb1']:
+                # AF11和BB1产品也使用DryFilmProduct模型
                 product = DryFilmProduct.objects.get(batch_number=self.batch_number)
             elif self.report_type == 'adhesive':
                 product = AdhesiveProduct.objects.get(batch_number=self.batch_number)
@@ -106,16 +110,10 @@ class InspectionReport(models.Model):
             # 获取产品标准
             standards = ProductStandard.objects.filter(product_code=self.product_code)
             
-            for item in self.selected_items:
-                # 处理两种格式：字符串格式和对象格式
-                if isinstance(item, str):
-                    # 字符串格式：直接使用字符串作为检测项目名称
-                    item_name = item
-                elif isinstance(item, dict) and 'name' in item:
-                    # 对象格式：使用字典中的name字段
-                    item_name = item['name']
-                else:
-                    # 无效格式，跳过
+            # 遍历用户选择的检测项目
+            for selected_item in self.selected_items:
+                item_name = selected_item.get('name')
+                if not item_name:
                     continue
                 
                 # 获取检测值
@@ -127,11 +125,11 @@ class InspectionReport(models.Model):
                 result = {
                     'test_item': item_name,
                     'test_value': test_value,
-                    'test_condition': standard.test_condition if standard else '',
-                    'unit': standard.unit if standard else '',
-                    'lower_limit': standard.lower_limit if standard else None,
-                    'upper_limit': standard.upper_limit if standard else None,
-                    'analysis_method': standard.analysis_method if standard else '',
+                    'test_condition': standard.test_condition if standard else selected_item.get('test_condition', ''),
+                    'unit': standard.unit if standard else selected_item.get('unit', ''),
+                    'lower_limit': standard.lower_limit if standard else selected_item.get('lower_limit'),
+                    'upper_limit': standard.upper_limit if standard else selected_item.get('upper_limit'),
+                    'analysis_method': standard.analysis_method if standard else selected_item.get('analysis_method', ''),
                     'is_qualified': self._check_qualification(test_value, standard) if standard else None
                 }
                 results.append(result)

@@ -219,7 +219,7 @@
                             <input class="form-check-input test-item-checkbox" type="checkbox" 
                                    value="${item.name}" id="item_${item.name}">
                             <label class="form-check-label" for="item_${item.name}">
-                                <strong>${item.name}</strong>
+                                <strong>${item.name_chinese || item.name}</strong>
                                 <br>
                                 <small class="text-muted">
                                     条件: ${item.test_condition || '无'} | 
