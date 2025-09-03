@@ -51,6 +51,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'quality_control.middleware.SecurityHeadersMiddleware',
 ]
 
 ROOT_URLCONF = 'quality_control.urls'
@@ -132,3 +133,27 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Security settings
+# For production, set these to True when using HTTPS
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SECURE = False     # Set to True in production with HTTPS
+CSRF_COOKIE_HTTPONLY = True
+
+# Security headers
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+
+# HSTS settings (uncomment for production with HTTPS)
+# SECURE_HSTS_SECONDS = 31536000  # 1 year
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_HSTS_PRELOAD = True
+
+# SSL redirect (uncomment for production)
+# SECURE_SSL_REDIRECT = True
+
+# Custom settings
+COMPANY_NAME = 'FSTEM 福斯特（安吉）新材料有限公司'
+REPORT_VERSION = 'QR/AJF-QA-006-1 版次A/4'

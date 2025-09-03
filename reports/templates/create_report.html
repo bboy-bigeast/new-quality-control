@@ -93,11 +93,11 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card shadow">
+            <div class="card shadow" id="guideCard">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">操作指南</h6>
                 </div>
-                <div class="card-body">
+                <div class="card-body" id="guideContent">
                     <div class="alert alert-info">
                         <h6 class="alert-heading"><i class="fas fa-info-circle"></i> 创建步骤</h6>
                         <ol class="mb-0 small">
@@ -115,7 +115,8 @@
                             <li>批号必须与数据库中的记录匹配</li>
                             <li>检测项目标准来自产品标准数据库</li>
                             <li>报告创建后可以编辑和补充信息</li>
-                            <li>报告编号将自动生成</li>
+                            <li>报告编号将自动生成（格式：版本号-时间戳-随机码）</li>
+                            <li>系统自动生成唯一报告编号，避免重复</li>
                         </ul>
                     </div>
                 </div>

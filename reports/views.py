@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.template.loader import render_to_string
 from django.core.paginator import Paginator
+from django.conf import settings
 import json
 
 from .models import InspectionReport
@@ -120,20 +121,71 @@ def report_detail(request, report_id):
     """检测报告详情"""
     report = get_object_or_404(InspectionReport, id=report_id)
     
+    # 处理检测结果，将英文项目名称转换为中文
+    processed_results = []
+    for result in report.test_results:
+        processed_result = result.copy()
+        test_item = result.get('test_item', '')
+        # 转换项目名称为中文
+        processed_result['test_item_chinese'] = TEST_ITEM_MAPPING.get(test_item, test_item)
+        processed_results.append(processed_result)
+    
     return render(request, 'reports/report_detail.html', {
-        'report': report
+        'report': report,
+        'processed_results': processed_results  # 传递处理后的结果
     })
+
+# 检测项目中英文映射
+TEST_ITEM_MAPPING = {
+    # 产品检测项目
+    'appearance': '外观',
+    'solid_content': '固含',
+    'viscosity': '粘度',
+    'acid_value': '酸值',
+    'moisture': '水分',
+    'residual_monomer': '残单',
+    'weight_avg_molecular_weight': '重均分子量',
+    'pdi': 'PDI',
+    'color': '色度',
+    'initial_tack': '初粘力',
+    'peel_strength': '剥离力',
+    'high_temperature_holding': '高温持粘',
+    'room_temperature_holding': '常温持粘',
+    'constant_load_peel': '定荷重剥离',
+}
 
 @login_required
 def generate_pdf(request, report_id):
     """生成PDF报告"""
     report = get_object_or_404(InspectionReport, id=report_id)
     
-    # 这里可以使用reportkit或其他PDF生成库
-    # 暂时返回HTML预览
-    html_content = render_to_string('reports/report_template.html', {
+    # 获取模板参数，默认为原始模板
+    template_name = request.GET.get('template', 'reports/report_template.html')
+    
+    # 验证模板名称，防止路径遍历攻击
+    valid_templates = [
+        'reports/report_template.html',
+        'reports/report_template_v2.html'
+    ]
+    
+    if template_name not in valid_templates:
+        template_name = 'reports/report_template.html'
+    
+    # 处理检测结果，将英文项目名称转换为中文
+    processed_results = []
+    for result in report.test_results:
+        processed_result = result.copy()
+        test_item = result.get('test_item', '')
+        # 转换项目名称为中文
+        processed_result['test_item_chinese'] = TEST_ITEM_MAPPING.get(test_item, test_item)
+        processed_results.append(processed_result)
+    
+    # 生成HTML内容
+    html_content = render_to_string(template_name, {
         'report': report,
-        'company_name': 'FJTEM 福斯特（安吉）新材料有限公司'
+        'company_name': settings.COMPANY_NAME,
+        'report_version': settings.REPORT_VERSION,
+        'processed_results': processed_results  # 传递处理后的结果
     })
     
     response = HttpResponse(html_content, content_type='text/html')

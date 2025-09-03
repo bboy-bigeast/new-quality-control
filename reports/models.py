@@ -48,11 +48,14 @@ class InspectionReport(models.Model):
     def generate_report_number(self):
         """自动生成报告编号"""
         if not self.report_number:
+            from django.conf import settings
             from django.utils import timezone
-            date_str = timezone.now().strftime('%Y%m%d')
-            # 计算所有报告的数量，确保编号唯一
-            count = InspectionReport.objects.count() + 1
-            self.report_number = f"QR/AJF-QA-{date_str}-{count:03d}"
+            import uuid
+            
+            # 生成唯一报告编号：基础版本 + 时间戳 + 随机后缀
+            timestamp = timezone.now().strftime('%Y%m%d%H%M%S')
+            random_suffix = str(uuid.uuid4())[:8]  # 取UUID的前8位作为随机后缀
+            self.report_number = f"{timestamp}-{random_suffix}"
     
     def save(self, *args, **kwargs):
         # 自动生成报告编号
