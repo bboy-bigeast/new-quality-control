@@ -1,0 +1,8 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <!-- 引入剪贴板工具库 -->
+    <script src="{% static 'js/clipboard-utils.js' %}"></script>
+{% endblock %}

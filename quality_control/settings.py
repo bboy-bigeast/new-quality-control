@@ -59,7 +59,7 @@ ROOT_URLCONF = 'quality_control.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -128,6 +128,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -160,8 +163,6 @@ COMPANY_NAME = 'FSTEM 福斯特（安吉）新材料有限公司'
 # 报告版本配置
 REPORT_VERSIONS = {
     'dryfilm': 'QR/AJF-QA-006-1 版次A/5',
-    'af11': 'QR/AJF-QA-006-1 版次A/5', 
-    'bb1': 'QR/AJF-QA-006-1 版次A/5',
     'adhesive': 'QR/AJF-QA-006-2 版次A/1'
 }
 

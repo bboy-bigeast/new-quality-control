@@ -158,7 +158,12 @@
     // 复制原料信息
     function copyMaterialInfo(materialName, materialBatch, supplier) {
         const text = `原料名称: ${materialName}\n原料批号: ${materialBatch}\n供应商: ${supplier}`;
-        copyToClipboard(text);
+        copyToClipboard(text, {
+            successMessage: '原料信息已复制到剪贴板',
+            errorMessage: '复制失败，请手动复制文本',
+            showToast: true,
+            toastPosition: 'top-right'
+        });
     }
 
     // 自定义过滤器（在模板中使用的简单版本）

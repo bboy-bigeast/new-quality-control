@@ -150,6 +150,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/clipboard-utils.js"></script>
     <script>
         // 自动关闭警告消息
         setTimeout(function() {
@@ -158,16 +159,6 @@
                 new bootstrap.Alert(alert).close();
             });
         }, 5000);
-
-        // 复制到剪贴板功能
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(function() {
-                alert('已复制到剪贴板！');
-            }).catch(function(err) {
-                console.error('复制失败:', err);
-                alert('复制失败，请手动复制文本内容');
-            });
-        }
 
         // 格式化日期
         function formatDate(dateString) {

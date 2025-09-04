@@ -118,20 +118,20 @@ class DryFilmProductAdmin(admin.ModelAdmin):
         # 添加复制按钮和内联JavaScript
         copy_button = f"""
         <div style="margin-top: 10px;">
-            <button type="button" onclick="copyToClipboard()" 
+            <button type="button" onclick="copyProductText()" 
                     style="background-color: #4CAF50; color: white; border: none; 
                            padding: 5px 10px; border-radius: 3px; cursor: pointer;">
                 复制文本
             </button>
         </div>
         <script>
-        function copyToClipboard() {{
+        function copyProductText() {{
             const text = document.getElementById('copy-text-content').textContent;
-            navigator.clipboard.writeText(text).then(() => {{
-                alert('已复制到剪贴板！');
-            }}).catch(err => {{
-                console.error('复制失败:', err);
-                alert('复制失败，请手动复制文本内容');
+            copyToClipboard(text, {{
+                showError: true,
+                successMessage: '已复制到剪贴板！',
+                errorMessage: '复制失败，请手动复制文本内容',
+                fallbackToPrompt: true
             }});
         }}
         </script>
@@ -545,20 +545,20 @@ class AdhesiveProductAdmin(admin.ModelAdmin):
         # 添加复制按钮和内联JavaScript
         copy_button = f"""
         <div style="margin-top: 10px;">
-            <button type="button" onclick="copyToClipboard()" 
+            <button type="button" onclick="copyAdhesiveText()" 
                     style="background-color: #4CAF50; color: white; border: none; 
                            padding: 5px 10px; border-radius: 3px; cursor: pointer;">
                 复制文本
             </button>
         </div>
         <script>
-        function copyToClipboard() {{
+        function copyAdhesiveText() {{
             const text = document.getElementById('copy-text-content').textContent;
-            navigator.clipboard.writeText(text).then(() => {{
-                alert('已复制到剪贴板！');
-            }}).catch(err => {{
-                console.error('复制失败:', err);
-                alert('复制失败，请手动复制文本内容');
+            copyToClipboard(text, {{
+                showError: true,
+                successMessage: '已复制到剪贴板！',
+                errorMessage: '复制失败，请手动复制文本内容',
+                fallbackToPrompt: true
             }});
         }}
         </script>
@@ -801,20 +801,20 @@ class PilotProductAdmin(admin.ModelAdmin):
         # 添加复制按钮和内联JavaScript
         copy_button = f"""
         <div style="margin-top: 10px;">
-            <button type="button" onclick="copyToClipboard()" 
+            <button type="button" onclick="copyPilotText()" 
                     style="background-color: #4CAF50; color: white; border: none; 
                            padding: 5px 10px; border-radius: 3px; cursor: pointer;">
                 复制文本
             </button>
         </div>
         <script>
-        function copyToClipboard() {{
+        function copyPilotText() {{
             const text = document.getElementById('copy-text-content').textContent;
-            navigator.clipboard.writeText(text).then(() => {{
-                alert('已复制到剪贴板！');
-            }}).catch(err => {{
-                console.error('复制失败:', err);
-                alert('复制失败，请手动复制文本内容');
+            copyToClipboard(text, {{
+                showError: true,
+                successMessage: '已复制到剪贴板！',
+                errorMessage: '复制失败，请手动复制文本内容',
+                fallbackToPrompt: true
             }});
         }}
         </script>

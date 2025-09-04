@@ -7,8 +7,6 @@ class InspectionReport(models.Model):
     """检测报告模型"""
     REPORT_TYPES = [
         ('dryfilm', '干膜产品检测报告'),
-        ('af11', 'AF11产品检测报告'),
-        ('bb1', 'BB1产品检测报告'),
         ('adhesive', '胶粘剂产品检测报告'),
     ]
     
@@ -77,8 +75,7 @@ class InspectionReport(models.Model):
     def _fill_product_info(self):
         """根据批号自动填充产品信息"""
         try:
-            if self.report_type in ['dryfilm', 'af11', 'bb1']:
-                # AF11和BB1产品也使用DryFilmProduct模型
+            if self.report_type == 'dryfilm':
                 product = DryFilmProduct.objects.get(batch_number=self.batch_number)
                 self.product_code = product.product_code
                 self.production_date = product.test_date
@@ -99,8 +96,7 @@ class InspectionReport(models.Model):
         
         try:
             # 获取产品数据
-            if self.report_type in ['dryfilm', 'af11', 'bb1']:
-                # AF11和BB1产品也使用DryFilmProduct模型
+            if self.report_type == 'dryfilm':
                 product = DryFilmProduct.objects.get(batch_number=self.batch_number)
             elif self.report_type == 'adhesive':
                 product = AdhesiveProduct.objects.get(batch_number=self.batch_number)
@@ -112,7 +108,18 @@ class InspectionReport(models.Model):
             
             # 遍历用户选择的检测项目
             for selected_item in self.selected_items:
-                item_name = selected_item.get('name')
+                # 处理两种格式的selected_items：
+                # 1. 字符串数组：['solid_content', 'viscosity']
+                # 2. 对象数组：[{'name': 'solid_content', ...}, {'name': 'viscosity', ...}]
+                if isinstance(selected_item, str):
+                    item_name = selected_item
+                    item_data = {}
+                elif isinstance(selected_item, dict):
+                    item_name = selected_item.get('name')
+                    item_data = selected_item
+                else:
+                    continue
+                
                 if not item_name:
                     continue
                 
@@ -125,11 +132,11 @@ class InspectionReport(models.Model):
                 result = {
                     'test_item': item_name,
                     'test_value': test_value,
-                    'test_condition': standard.test_condition if standard else selected_item.get('test_condition', ''),
-                    'unit': standard.unit if standard else selected_item.get('unit', ''),
-                    'lower_limit': standard.lower_limit if standard else selected_item.get('lower_limit'),
-                    'upper_limit': standard.upper_limit if standard else selected_item.get('upper_limit'),
-                    'analysis_method': standard.analysis_method if standard else selected_item.get('analysis_method', ''),
+                    'test_condition': standard.test_condition if standard else item_data.get('test_condition', ''),
+                    'unit': standard.unit if standard else item_data.get('unit', ''),
+                    'lower_limit': standard.lower_limit if standard else item_data.get('lower_limit'),
+                    'upper_limit': standard.upper_limit if standard else item_data.get('upper_limit'),
+                    'analysis_method': standard.analysis_method if standard else item_data.get('analysis_method', ''),
                     'is_qualified': self._check_qualification(test_value, standard) if standard else None
                 }
                 results.append(result)

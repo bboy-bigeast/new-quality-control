@@ -213,6 +213,7 @@ class ProductStandard(models.Model):
         ('constant_load_peel', '定荷重剥离'),
         ('dispersion', '分散性'),
         ('stability', '稳定性'),
+        ('tape_structure', '胶带结构'),
     ]
     
     STANDARD_TYPES = [
@@ -316,6 +317,7 @@ class AdhesiveProduct(models.Model):
     high_temperature_holding = models.FloatField(null=True, blank=True, verbose_name="高温持粘")
     room_temperature_holding = models.FloatField(null=True, blank=True, verbose_name="常温持粘")
     constant_load_peel = models.FloatField(null=True, blank=True, verbose_name="定荷重剥离")
+    tape_structure = models.CharField(max_length=100, blank=True, verbose_name="胶带结构")
     
     # 修改日志
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
@@ -394,7 +396,7 @@ class AdhesiveProduct(models.Model):
         tape_standards = ProductStandard.objects.filter(
             product_code=self.product_code, 
             test_item__in=['initial_tack', 'peel_strength', 'high_temperature_holding', 
-                          'room_temperature_holding', 'constant_load_peel']
+                          'room_temperature_holding', 'constant_load_peel', 'tape_structure']
         )
         
         judgment_details = {

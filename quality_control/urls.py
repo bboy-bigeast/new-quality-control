@@ -22,4 +22,5 @@ urlpatterns = [
     path('', include('dashboard.urls')),
     path('raw-materials/', include('raw_materials.urls')),
     path('reports/', include('reports.urls')),
+    path('core/', include('core.urls')),
 ]

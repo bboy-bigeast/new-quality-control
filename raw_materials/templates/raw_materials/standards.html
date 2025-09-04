@@ -188,7 +188,12 @@
     // 复制标准信息
     function copyStandardInfo(materialName, standardNumber) {
         const text = `原料名称: ${materialName}\n标准编号: ${standardNumber}`;
-        copyToClipboard(text);
+        copyToClipboard(text, {
+            successMessage: '标准信息已复制到剪贴板',
+            errorMessage: '复制失败，请手动复制文本',
+            showToast: true,
+            toastPosition: 'top-right'
+        });
     }
 
     // 显示标准详情

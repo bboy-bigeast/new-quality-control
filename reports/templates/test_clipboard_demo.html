@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>复制功能测试</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>复制功能测试页面</h1>
+        <p class="text-muted">测试通用复制功能是否正常工作</p>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">测试复制功能</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">测试文本内容：</label>
+                    <textarea id="testText" class="form-control" rows="3">这是一个测试文本，用于验证复制功能是否正常工作。</textarea>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" onclick="testCopy()">
+                        <i class="bi bi-clipboard"></i> 测试复制
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="testCopyWithOptions()">
+                        <i class="bi bi-gear"></i> 测试带选项复制
+                    </button>
+                    <button class="btn btn-outline-info" onclick="checkCompatibility()">
+                        <i class="bi bi-info-circle"></i> 检查兼容性
+                    </button>
+                </div>
+                
+                <div id="result" class="mt-3"></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">浏览器兼容性信息</h5>
+            </div>
+            <div class="card-body">
+                <pre id="compatibilityInfo" class="bg-light p-3 rounded"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/clipboard-utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        function testCopy() {
+            const text = document.getElementById('testText').value;
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.innerHTML = '<div class="alert alert-info">正在复制...</div>';
+            
+            copyToClipboard(text)
+                .then(result => {
+                    if (result.success) {
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle"></i> 复制成功！
+                                <br><small>使用的方法: ${result.method}</small>
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-circle"></i> 复制失败
+                                <br><small>错误: ${result.error?.message || '未知错误'}</small>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-circle"></i> 复制过程出错
+                            <br><small>${error.message}</small>
+                        </div>
+                    `;
+                });
+        }
+        
+        function testCopyWithOptions() {
+            const text = document.getElementById('testText').value;
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.innerHTML = '<div class="alert alert-info">正在复制（带选项）...</div>';
+            
+            copyToClipboard(text, {
+                successMessage: '自定义成功消息：文本已复制！',
+                errorMessage: '自定义错误消息：复制失败，请重试',
+                showSuccess: true,
+                showError: true,
+                fallbackToPrompt: true
+            })
+            .then(result => {
+                resultDiv.innerHTML = `
+                    <div class="alert ${result.success ? 'alert-success' : 'alert-warning'}">
+                        <i class="bi ${result.success ? 'bi-check-circle' : 'bi-exclamation-triangle'}"></i> 
+                        ${result.success ? '复制完成' : '复制结果'}
+                        <br><small>使用的方法: ${result.method}</small>
+                        <br><small>成功: ${result.success}</small>
+                    </div>
+                `;
+            });
+        }
+        
+        function checkCompatibility() {
+            const info = ClipboardUtils.getCompatibilityInfo();
+            document.getElementById('compatibilityInfo').textContent = JSON.stringify(info, null, 2);
+        }
+        
+        // 页面加载时自动检查兼容性
+        document.addEventListener('DOMContentLoaded', function() {
+            checkCompatibility();
+            console.log('ClipboardUtils测试页面已加载');
+        });
+    </script>
+</body>
+</html>
