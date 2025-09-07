@@ -1,9 +1,14 @@
 """通用工具函数模块 - 用于提取重复的统计计算逻辑"""
 
+import csv
+import io
+from django.http import HttpResponse
 from django.db.models import Avg, StdDev
 import numpy as np
 from scipy import stats
 from products.models import ProductStandard
+import openpyxl
+from openpyxl.utils import get_column_letter
 
 def calculate_statistics(data_values):
     """计算基本统计信息"""
@@ -190,3 +195,72 @@ def get_batch_date(product, date_field='test_date'):
     else:
         date_value = getattr(product, date_field)
         return date_value.strftime('%Y%m%d') if date_value else '00000000'
+
+def export_to_csv(model_name, queryset, fields):
+    """导出数据到CSV格式"""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{model_name}_export.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(fields)
+    
+    for obj in queryset:
+        row = []
+        for field in fields:
+            value = getattr(obj, field, '')
+            if hasattr(value, '__call__'):
+                value = value()
+            elif hasattr(value, 'strftime'):
+                value = value.strftime('%Y-%m-%d %H:%M:%S')
+            row.append(str(value))
+        writer.writerow(row)
+    
+    return response
+
+def export_to_excel(model_name, queryset, fields):
+    """导出数据到Excel格式"""
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = model_name
+    
+    # 写入表头
+    for col_num, field in enumerate(fields, 1):
+        ws.cell(row=1, column=col_num, value=field)
+    
+    # 写入数据
+    for row_num, obj in enumerate(queryset, 2):
+        for col_num, field in enumerate(fields, 1):
+            value = getattr(obj, field, '')
+            if hasattr(value, '__call__'):
+                value = value()
+            elif hasattr(value, 'strftime'):
+                value = value.strftime('%Y-%m-%d %H:%M:%S')
+            ws.cell(row=row_num, column=col_num, value=str(value))
+    
+    # 自动调整列宽
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            if cell.value:
+                max_length = max(max_length, len(str(cell.value)))
+        adjusted_width = min(max_length + 2, 50)
+        ws.column_dimensions[column].width = adjusted_width
+    
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="{model_name}_export.xlsx"'
+    
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    response.write(buffer.getvalue())
+    
+    return response
+
+def export_data(request, queryset, model_name, fields, format_type='csv'):
+    """通用数据导出函数"""
+    if format_type == 'csv':
+        return export_to_csv(model_name, queryset, fields)
+    elif format_type == 'excel':
+        return export_to_excel(model_name, queryset, fields)
+    else:
+        return HttpResponse("不支持的导出格式", status=400)

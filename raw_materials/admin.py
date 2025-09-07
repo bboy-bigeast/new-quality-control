@@ -5,6 +5,7 @@ from django import forms
 from django.urls import path, reverse
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
+from core.utils import export_data
 from .models import RawMaterial, RawMaterialHistory, RawMaterialStandard, RawMaterialStandardHistory
 
 
@@ -14,7 +15,7 @@ class RawMaterialAdmin(admin.ModelAdmin):
         'material_name', 'material_batch', 'supplier', 'inspector', 
         'test_date', 'final_judgment', 'judgment_status'
     ]
-    actions = ['update_judgments_action']
+    actions = ['update_judgments_action', 'export_raw_materials_csv', 'export_raw_materials_excel']
     list_filter = [
         'material_name', 'material_batch', 'supplier', 'test_date', 
         'final_judgment', 'judgment_status'
@@ -182,6 +183,34 @@ class RawMaterialAdmin(admin.ModelAdmin):
         )
     
     update_judgments_action.short_description = "更新选定记录的判定结果"
+
+    def export_raw_materials_csv(self, request, queryset):
+        """导出原料数据到CSV格式"""
+        fields = [
+            'material_name', 'material_batch', 'supplier', 'distributor', 
+            'inspector', 'test_date', 'sample_category', 'acceptance_form',
+            'logistics_form', 'coa_number', 'appearance', 'purity', 
+            'peak_position', 'inhibitor_content', 'moisture_content', 
+            'color', 'ethanol_content', 'acidity', 'final_judgment', 
+            'judgment_status', 'remarks', 'created_at', 'updated_at'
+        ]
+        return export_data(request, queryset, 'RawMaterial', fields, 'csv')
+    
+    export_raw_materials_csv.short_description = "导出选定原料记录 (CSV)"
+
+    def export_raw_materials_excel(self, request, queryset):
+        """导出原料数据到Excel格式"""
+        fields = [
+            'material_name', 'material_batch', 'supplier', 'distributor', 
+            'inspector', 'test_date', 'sample_category', 'acceptance_form',
+            'logistics_form', 'coa_number', 'appearance', 'purity', 
+            'peak_position', 'inhibitor_content', 'moisture_content', 
+            'color', 'ethanol_content', 'acidity', 'final_judgment', 
+            'judgment_status', 'remarks', 'created_at', 'updated_at'
+        ]
+        return export_data(request, queryset, 'RawMaterial', fields, 'excel')
+    
+    export_raw_materials_excel.short_description = "导出选定原料记录 (Excel)"
     
     def save_model(self, request, obj, form, change):
         # 记录修改人信息
@@ -294,6 +323,7 @@ class RawMaterialStandardAdmin(admin.ModelAdmin):
         'material_name', 'test_item', 'standard_type', 'supplier',
         'lower_limit', 'upper_limit', 'target_value'
     ]
+    actions = ['export_standards_csv', 'export_standards_excel']
     list_filter = ['material_name', 'standard_type', 'test_item', 'supplier']
     search_fields = ['material_name', 'test_item', 'supplier']
     ordering = ['material_name', 'test_item', 'standard_type', 'supplier']
@@ -312,6 +342,26 @@ class RawMaterialStandardAdmin(admin.ModelAdmin):
     )
     
     readonly_fields = ['created_at', 'updated_at', 'modified_by', 'modification_reason']
+
+    def export_standards_csv(self, request, queryset):
+        """导出原料标准数据到CSV格式"""
+        fields = [
+            'material_name', 'test_item', 'standard_type', 'supplier',
+            'lower_limit', 'upper_limit', 'target_value', 'created_at', 'updated_at'
+        ]
+        return export_data(request, queryset, 'RawMaterialStandard', fields, 'csv')
+    
+    export_standards_csv.short_description = "导出选定标准记录 (CSV)"
+
+    def export_standards_excel(self, request, queryset):
+        """导出原料标准数据到Excel格式"""
+        fields = [
+            'material_name', 'test_item', 'standard_type', 'supplier',
+            'lower_limit', 'upper_limit', 'target_value', 'created_at', 'updated_at'
+        ]
+        return export_data(request, queryset, 'RawMaterialStandard', fields, 'excel')
+    
+    export_standards_excel.short_description = "导出选定标准记录 (Excel)"
     
     def save_model(self, request, obj, form, change):
         # 记录修改人信息

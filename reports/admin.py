@@ -2,7 +2,9 @@ from django.contrib import admin
 from django.contrib import messages
 from django import forms
 from django.utils.safestring import mark_safe
+from datetime import datetime
 from .models import InspectionReport
+from core.utils import export_data
 
 @admin.register(InspectionReport)
 class InspectionReportAdmin(admin.ModelAdmin):
@@ -11,6 +13,7 @@ class InspectionReportAdmin(admin.ModelAdmin):
         'production_date', 'inspector', 'reviewer', 'report_date',
         'conclusion', 'status'
     ]
+    actions = ['export_reports_csv', 'export_reports_excel']
     list_filter = [
         'report_type', 'production_date', 'report_date', 'status',
         'conclusion', 'inspector', 'reviewer'
@@ -168,3 +171,35 @@ class InspectionReportAdmin(admin.ModelAdmin):
         extra_context['show_return_to_list'] = True
         
         return super().change_view(request, object_id, form_url, extra_context)
+    
+    def export_reports_csv(self, request, queryset):
+        """导出检测报告数据到CSV格式"""
+        return export_data(
+            request=request,
+            queryset=queryset,
+            model_name="检测报告",
+            format_type='csv',
+            fields=[
+                'report_number', 'report_type', 'product_code', 'batch_number',
+                'production_date', 'inspector', 'reviewer', 'report_date',
+                'conclusion', 'status', 'remarks'
+            ]
+        )
+    
+    export_reports_csv.short_description = "导出选中报告 (CSV)"
+    
+    def export_reports_excel(self, request, queryset):
+        """导出检测报告数据到Excel格式"""
+        return export_data(
+            request=request,
+            queryset=queryset,
+            model_name="检测报告",
+            format_type='excel',
+            fields=[
+                'report_number', 'report_type', 'product_code', 'batch_number',
+                'production_date', 'inspector', 'reviewer', 'report_date',
+                'conclusion', 'status', 'remarks'
+            ]
+        )
+    
+    export_reports_excel.short_description = "导出选中报告 (Excel)"

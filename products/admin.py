@@ -1,10 +1,11 @@
 from django.contrib import admin
 from django.contrib import messages
+from core.utils import export_data
 from .models import DryFilmProduct, ProductStandard, ProductStandardHistory, DryFilmProductHistory, AdhesiveProduct, AdhesiveProductHistory, PilotProduct, PilotProductHistory
 
 @admin.register(DryFilmProduct)
 class DryFilmProductAdmin(admin.ModelAdmin):
-    actions = ['update_judgments_action']
+    actions = ['update_judgments_action', 'export_dryfilm_products_csv', 'export_dryfilm_products_excel']
     list_display = [
         'product_code', 'batch_number', 'production_line', 'inspector', 
         'test_date', 'external_final_judgment', 'internal_final_judgment',
@@ -234,6 +235,32 @@ class DryFilmProductAdmin(admin.ModelAdmin):
         
         return super().change_view(request, object_id, form_url, extra_context)
 
+    def export_pilot_products_csv(self, request, queryset):
+        """导出选定的中试产品记录为CSV格式"""
+        fields = [
+            'product_code', 'batch_number', 'production_line', 'inspector',
+            'test_date', 'sample_category', 'appearance', 'solid_content',
+            'viscosity', 'acid_value', 'moisture', 'residual_monomer',
+            'weight_avg_molecular_weight', 'pdi', 'color', 'polymerization_inhibitor',
+            'conversion_rate', 'loading_temperature', 'remarks', 'created_at', 'updated_at'
+        ]
+        return export_data(request, queryset, 'PilotProduct', fields, 'csv')
+    
+    export_pilot_products_csv.short_description = "导出选定中试产品记录 (CSV)"
+
+    def export_pilot_products_excel(self, request, queryset):
+        """导出选定的中试产品记录为Excel格式"""
+        fields = [
+            'product_code', 'batch_number', 'production_line', 'inspector',
+            'test_date', 'sample_category', 'appearance', 'solid_content',
+            'viscosity', 'acid_value', 'moisture', 'residual_monomer',
+            'weight_avg_molecular_weight', 'pdi', 'color', 'polymerization_inhibitor',
+            'conversion_rate', 'loading_temperature', 'remarks', 'created_at', 'updated_at'
+        ]
+        return export_data(request, queryset, 'PilotProduct', fields, 'excel')
+    
+    export_pilot_products_excel.short_description = "导出选定中试产品记录 (Excel)"
+
     def update_judgments_action(self, request, queryset):
         """批量更新选定干膜产品记录的判定结果"""
         from django.db import transaction
@@ -259,9 +286,60 @@ class DryFilmProductAdmin(admin.ModelAdmin):
     
     update_judgments_action.short_description = "更新选定记录的判定结果"
 
+    def export_dryfilm_products_csv(self, request, queryset):
+        """导出选定的干膜产品记录为CSV格式"""
+        fields = [
+            'product_code', 'batch_number', 'production_line', 'inspector',
+            'test_date', 'sample_category', 'appearance', 'solid_content',
+            'viscosity', 'acid_value', 'moisture', 'residual_monomer',
+            'weight_avg_molecular_weight', 'pdi', 'color', 'polymerization_inhibitor',
+            'conversion_rate', 'loading_temperature', 'external_final_judgment',
+            'internal_final_judgment', 'judgment_status', 'remarks', 'created_at', 'updated_at'
+        ]
+        return export_data(request, queryset, 'DryFilmProduct', fields, 'csv')
+    
+    export_dryfilm_products_csv.short_description = "导出选定干膜产品记录 (CSV)"
+
+    def export_dryfilm_products_excel(self, request, queryset):
+        """导出选定的干膜产品记录为Excel格式"""
+        fields = [
+            'product_code', 'batch_number', 'production_line', 'inspector',
+            'test_date', 'sample_category', 'appearance', 'solid_content',
+            'viscosity', 'acid_value', 'moisture', 'residual_monomer',
+            'weight_avg_molecular_weight', 'pdi', 'color', 'polymerization_inhibitor',
+            'conversion_rate', 'loading_temperature', 'external_final_judgment',
+            'internal_final_judgment', 'judgment_status', 'remarks', 'created_at', 'updated_at'
+        ]
+        return export_data(request, queryset, 'DryFilmProduct', fields, 'excel')
+    
+    export_dryfilm_products_excel.short_description = "导出选定干膜产品记录 (Excel)"
+
 
 @admin.register(ProductStandard)
 class ProductStandardAdmin(admin.ModelAdmin):
+    actions = ['export_product_standards_csv', 'export_product_standards_excel']
+    
+    def export_product_standards_csv(self, request, queryset):
+        """导出选定的产品标准记录为CSV格式"""
+        fields = [
+            'product_code', 'test_item', 'standard_type', 'lower_limit',
+            'upper_limit', 'target_value', 'text_standard', 'test_condition',
+            'unit', 'analysis_method', 'created_at', 'updated_at'
+        ]
+        return export_data(request, queryset, 'ProductStandard', fields, 'csv')
+    
+    export_product_standards_csv.short_description = "导出选定产品标准记录 (CSV)"
+
+    def export_product_standards_excel(self, request, queryset):
+        """导出选定的产品标准记录为Excel格式"""
+        fields = [
+            'product_code', 'test_item', 'standard_type', 'lower_limit',
+            'upper_limit', 'target_value', 'text_standard', 'test_condition',
+            'unit', 'analysis_method', 'created_at', 'updated_at'
+        ]
+        return export_data(request, queryset, 'ProductStandard', fields, 'excel')
+    
+    export_product_standards_excel.short_description = "导出选定产品标准记录 (Excel)"
     list_display = [
         'product_code', 'test_item', 'standard_type', 
         'lower_limit', 'upper_limit', 'target_value', 'text_standard',
@@ -406,7 +484,7 @@ class DryFilmProductHistoryAdmin(admin.ModelAdmin):
 
 @admin.register(AdhesiveProduct)
 class AdhesiveProductAdmin(admin.ModelAdmin):
-    actions = ['update_judgments_action']
+    actions = ['update_judgments_action', 'export_adhesive_products_csv', 'export_adhesive_products_excel']
     list_display = [
         'product_code', 'batch_number', 'production_line', 
         'physical_inspector', 'tape_inspector', 'physical_test_date',
@@ -661,6 +739,38 @@ class AdhesiveProductAdmin(admin.ModelAdmin):
         
         return super().change_view(request, object_id, form_url, extra_context)
 
+    def export_adhesive_products_csv(self, request, queryset):
+        """导出选定的胶粘剂产品记录为CSV格式"""
+        fields = [
+            'product_code', 'batch_number', 'production_line', 
+            'physical_inspector', 'tape_inspector', 'physical_test_date',
+            'tape_test_date', 'sample_category', 'appearance', 'solid_content',
+            'viscosity', 'acid_value', 'moisture', 'residual_monomer',
+            'weight_avg_molecular_weight', 'pdi', 'color', 'initial_tack',
+            'peel_strength', 'high_temperature_holding', 'room_temperature_holding',
+            'constant_load_peel', 'physical_judgment', 'tape_judgment',
+            'final_judgment', 'judgment_status', 'remarks', 'created_at', 'updated_at'
+        ]
+        return export_data(request, queryset, 'AdhesiveProduct', fields, 'csv')
+    
+    export_adhesive_products_csv.short_description = "导出选定胶粘剂产品记录 (CSV)"
+
+    def export_adhesive_products_excel(self, request, queryset):
+        """导出选定的胶粘剂产品记录为Excel格式"""
+        fields = [
+            'product_code', 'batch_number', 'production_line', 
+            'physical_inspector', 'tape_inspector', 'physical_test_date',
+            'tape_test_date', 'sample_category', 'appearance', 'solid_content',
+            'viscosity', 'acid_value', 'moisture', 'residual_monomer',
+            'weight_avg_molecular_weight', 'pdi', 'color', 'initial_tack',
+            'peel_strength', 'high_temperature_holding', 'room_temperature_holding',
+            'constant_load_peel', 'physical_judgment', 'tape_judgment',
+            'final_judgment', 'judgment_status', 'remarks', 'created_at', 'updated_at'
+        ]
+        return export_data(request, queryset, 'AdhesiveProduct', fields, 'excel')
+    
+    export_adhesive_products_excel.short_description = "导出选定胶粘剂产品记录 (Excel)"
+
     def update_judgments_action(self, request, queryset):
         """批量更新选定胶粘剂产品记录的判定结果"""
         from django.db import transaction
@@ -707,6 +817,7 @@ class AdhesiveProductHistoryAdmin(admin.ModelAdmin):
 
 @admin.register(PilotProduct)
 class PilotProductAdmin(admin.ModelAdmin):
+    actions = ['export_pilot_products_csv', 'export_pilot_products_excel']
     list_display = [
         'product_code', 'batch_number', 'production_line', 'inspector', 
         'test_date', 'sample_category'
