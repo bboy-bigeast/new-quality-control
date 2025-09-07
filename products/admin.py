@@ -244,7 +244,14 @@ class DryFilmProductAdmin(admin.ModelAdmin):
             'weight_avg_molecular_weight', 'pdi', 'color', 'polymerization_inhibitor',
             'conversion_rate', 'loading_temperature', 'remarks', 'created_at', 'updated_at'
         ]
-        return export_data(request, queryset, 'PilotProduct', fields, 'csv')
+        field_names = [
+            '产品牌号', '产品批号', '产线', '检测人',
+            '测试日期', '样品类别', '外观', '固含',
+            '粘度', '酸值', '水分', '残单',
+            '重均分子量', 'PDI', '色度', '阻聚剂',
+            '转化率', '装车温度', '备注', '创建时间', '更新时间'
+        ]
+        return export_data(request, queryset, 'PilotProduct', fields, 'csv', field_names)
     
     export_pilot_products_csv.short_description = "导出选定中试产品记录 (CSV)"
 
@@ -257,7 +264,14 @@ class DryFilmProductAdmin(admin.ModelAdmin):
             'weight_avg_molecular_weight', 'pdi', 'color', 'polymerization_inhibitor',
             'conversion_rate', 'loading_temperature', 'remarks', 'created_at', 'updated_at'
         ]
-        return export_data(request, queryset, 'PilotProduct', fields, 'excel')
+        field_names = [
+            '产品牌号', '产品批号', '产线', '检测人',
+            '测试日期', '样品类别', '外观', '固含',
+            '粘度', '酸值', '水分', '残单',
+            '重均分子量', 'PDI', '色度', '阻聚剂',
+            '转化率', '装车温度', '备注', '创建时间', '更新时间'
+        ]
+        return export_data(request, queryset, 'PilotProduct', fields, 'excel', field_names)
     
     export_pilot_products_excel.short_description = "导出选定中试产品记录 (Excel)"
 
@@ -296,7 +310,15 @@ class DryFilmProductAdmin(admin.ModelAdmin):
             'conversion_rate', 'loading_temperature', 'external_final_judgment',
             'internal_final_judgment', 'judgment_status', 'remarks', 'created_at', 'updated_at'
         ]
-        return export_data(request, queryset, 'DryFilmProduct', fields, 'csv')
+        field_names = [
+            '牌号', '批号', '生产线', '检测人',
+            '测试日期', '样品类别', '外观', '固含',
+            '粘度', '酸值', '水分', '残单',
+            '重均分子量', 'PDI', '色度', '阻聚剂',
+            '转化率', '装车温度', '外部最终判定',
+            '内部最终判定', '判定状态', '备注', '创建时间', '更新时间'
+        ]
+        return export_data(request, queryset, 'DryFilmProduct', fields, 'csv', field_names)
     
     export_dryfilm_products_csv.short_description = "导出选定干膜产品记录 (CSV)"
 
@@ -310,7 +332,15 @@ class DryFilmProductAdmin(admin.ModelAdmin):
             'conversion_rate', 'loading_temperature', 'external_final_judgment',
             'internal_final_judgment', 'judgment_status', 'remarks', 'created_at', 'updated_at'
         ]
-        return export_data(request, queryset, 'DryFilmProduct', fields, 'excel')
+        field_names = [
+            '牌号', '批号', '生产线', '检测人',
+            '测试日期', '样品类别', '外观', '固含',
+            '粘度', '酸值', '水分', '残单',
+            '重均分子量', 'PDI', '色度', '阻聚剂',
+            '转化率', '装车温度', '外部最终判定',
+            '内部最终判定', '判定状态', '备注', '创建时间', '更新时间'
+        ]
+        return export_data(request, queryset, 'DryFilmProduct', fields, 'excel', field_names)
     
     export_dryfilm_products_excel.short_description = "导出选定干膜产品记录 (Excel)"
 
@@ -326,7 +356,12 @@ class ProductStandardAdmin(admin.ModelAdmin):
             'upper_limit', 'target_value', 'text_standard', 'test_condition',
             'unit', 'analysis_method', 'created_at', 'updated_at'
         ]
-        return export_data(request, queryset, 'ProductStandard', fields, 'csv')
+        field_names = [
+            '牌号', '测试项目', '标准类型', '下限',
+            '上限', '目标值', '文本标准', '测试条件',
+            '单位', '分析方法', '创建时间', '更新时间'
+        ]
+        return export_data(request, queryset, 'ProductStandard', fields, 'csv', field_names)
     
     export_product_standards_csv.short_description = "导出选定产品标准记录 (CSV)"
 
@@ -337,7 +372,12 @@ class ProductStandardAdmin(admin.ModelAdmin):
             'upper_limit', 'target_value', 'text_standard', 'test_condition',
             'unit', 'analysis_method', 'created_at', 'updated_at'
         ]
-        return export_data(request, queryset, 'ProductStandard', fields, 'excel')
+        field_names = [
+            '牌号', '测试项目', '标准类型', '下限',
+            '上限', '目标值', '文本标准', '测试条件',
+            '单位', '分析方法', '创建时间', '更新时间'
+        ]
+        return export_data(request, queryset, 'ProductStandard', fields, 'excel', field_names)
     
     export_product_standards_excel.short_description = "导出选定产品标准记录 (Excel)"
     list_display = [
@@ -751,7 +791,17 @@ class AdhesiveProductAdmin(admin.ModelAdmin):
             'constant_load_peel', 'physical_judgment', 'tape_judgment',
             'final_judgment', 'judgment_status', 'remarks', 'created_at', 'updated_at'
         ]
-        return export_data(request, queryset, 'AdhesiveProduct', fields, 'csv')
+        field_names = [
+            '牌号', '批号', '生产线', 
+            '理化检测人', '胶带检测人', '理化测试日期',
+            '胶带测试日期', '样品类别', '外观', '固含',
+            '粘度', '酸值', '水分', '残单',
+            '重均分子量', 'PDI', '色度', '初粘',
+            '剥离', '高温持粘', '常温持粘',
+            '定荷重剥离', '理化判定', '胶带判定',
+            '最终判定', '判定状态', '备注', '创建时间', '更新时间'
+        ]
+        return export_data(request, queryset, 'AdhesiveProduct', fields, 'csv', field_names)
     
     export_adhesive_products_csv.short_description = "导出选定胶粘剂产品记录 (CSV)"
 
@@ -767,7 +817,17 @@ class AdhesiveProductAdmin(admin.ModelAdmin):
             'constant_load_peel', 'physical_judgment', 'tape_judgment',
             'final_judgment', 'judgment_status', 'remarks', 'created_at', 'updated_at'
         ]
-        return export_data(request, queryset, 'AdhesiveProduct', fields, 'excel')
+        field_names = [
+            '牌号', '批号', '生产线', 
+            '理化检测人', '胶带检测人', '理化测试日期',
+            '胶带测试日期', '样品类别', '外观', '固含',
+            '粘度', '酸值', '水分', '残单',
+            '重均分子量', 'PDI', '色度', '初粘',
+            '剥离', '高温持粘', '常温持粘',
+            '定荷重剥离', '理化判定', '胶带判定',
+            '最终判定', '判定状态', '备注', '创建时间', '更新时间'
+        ]
+        return export_data(request, queryset, 'AdhesiveProduct', fields, 'excel', field_names)
     
     export_adhesive_products_excel.short_description = "导出选定胶粘剂产品记录 (Excel)"
 

@@ -196,13 +196,19 @@ def get_batch_date(product, date_field='test_date'):
         date_value = getattr(product, date_field)
         return date_value.strftime('%Y%m%d') if date_value else '00000000'
 
-def export_to_csv(model_name, queryset, fields):
+def export_to_csv(model_name, queryset, fields, field_names=None):
     """导出数据到CSV格式"""
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = f'attachment; filename="{model_name}_export.csv"'
     
     writer = csv.writer(response)
+    
+    # 写入英文字段名（第一行）
     writer.writerow(fields)
+    
+    # 如果提供了中文字段名，写入第二行
+    if field_names and len(field_names) == len(fields):
+        writer.writerow(field_names)
     
     for obj in queryset:
         row = []
@@ -217,18 +223,24 @@ def export_to_csv(model_name, queryset, fields):
     
     return response
 
-def export_to_excel(model_name, queryset, fields):
+def export_to_excel(model_name, queryset, fields, field_names=None):
     """导出数据到Excel格式"""
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = model_name
     
-    # 写入表头
+    # 写入英文字段名（第一行）
     for col_num, field in enumerate(fields, 1):
         ws.cell(row=1, column=col_num, value=field)
     
-    # 写入数据
-    for row_num, obj in enumerate(queryset, 2):
+    # 如果提供了中文字段名，写入第二行
+    if field_names and len(field_names) == len(fields):
+        for col_num, field_name in enumerate(field_names, 1):
+            ws.cell(row=2, column=col_num, value=field_name)
+    
+    # 写入数据（从第三行开始）
+    start_row = 3 if field_names and len(field_names) == len(fields) else 2
+    for row_num, obj in enumerate(queryset, start_row):
         for col_num, field in enumerate(fields, 1):
             value = getattr(obj, field, '')
             if hasattr(value, '__call__'):
@@ -256,11 +268,11 @@ def export_to_excel(model_name, queryset, fields):
     
     return response
 
-def export_data(request, queryset, model_name, fields, format_type='csv'):
+def export_data(request, queryset, model_name, fields, format_type='csv', field_names=None):
     """通用数据导出函数"""
     if format_type == 'csv':
-        return export_to_csv(model_name, queryset, fields)
+        return export_to_csv(model_name, queryset, fields, field_names)
     elif format_type == 'excel':
-        return export_to_excel(model_name, queryset, fields)
+        return export_to_excel(model_name, queryset, fields, field_names)
     else:
         return HttpResponse("不支持的导出格式", status=400)

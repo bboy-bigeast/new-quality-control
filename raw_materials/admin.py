@@ -194,7 +194,15 @@ class RawMaterialAdmin(admin.ModelAdmin):
             'color', 'ethanol_content', 'acidity', 'final_judgment', 
             'judgment_status', 'remarks', 'created_at', 'updated_at'
         ]
-        return export_data(request, queryset, 'RawMaterial', fields, 'csv')
+        field_names = [
+            '原料名称', '原料批号', '供应商', '经销商', 
+            '检测人', '测试日期', '样品类别', '验收单号',
+            '物流单号', 'COA编号', '外观', '纯度', 
+            '出峰位置', '阻聚剂含量', '水分含量', 
+            '色度', '乙醇含量', '酸度', '最终判定', 
+            '判定状态', '备注', '创建时间', '更新时间'
+        ]
+        return export_data(request, queryset, 'RawMaterial', fields, 'csv', field_names)
     
     export_raw_materials_csv.short_description = "导出选定原料记录 (CSV)"
 
@@ -208,7 +216,15 @@ class RawMaterialAdmin(admin.ModelAdmin):
             'color', 'ethanol_content', 'acidity', 'final_judgment', 
             'judgment_status', 'remarks', 'created_at', 'updated_at'
         ]
-        return export_data(request, queryset, 'RawMaterial', fields, 'excel')
+        field_names = [
+            '原料名称', '原料批号', '供应商', '经销商', 
+            '检测人', '测试日期', '样品类别', '验收单号',
+            '物流单号', 'COA编号', '外观', '纯度', 
+            '出峰位置', '阻聚剂含量', '水分含量', 
+            '色度', '乙醇含量', '酸度', '最终判定', 
+            '判定状态', '备注', '创建时间', '更新时间'
+        ]
+        return export_data(request, queryset, 'RawMaterial', fields, 'excel', field_names)
     
     export_raw_materials_excel.short_description = "导出选定原料记录 (Excel)"
     
@@ -349,7 +365,11 @@ class RawMaterialStandardAdmin(admin.ModelAdmin):
             'material_name', 'test_item', 'standard_type', 'supplier',
             'lower_limit', 'upper_limit', 'target_value', 'created_at', 'updated_at'
         ]
-        return export_data(request, queryset, 'RawMaterialStandard', fields, 'csv')
+        field_names = [
+            '原料名称', '测试项目', '标准类型', '供应商',
+            '下限', '上限', '目标值', '创建时间', '更新时间'
+        ]
+        return export_data(request, queryset, 'RawMaterialStandard', fields, 'csv', field_names)
     
     export_standards_csv.short_description = "导出选定标准记录 (CSV)"
 
@@ -359,7 +379,11 @@ class RawMaterialStandardAdmin(admin.ModelAdmin):
             'material_name', 'test_item', 'standard_type', 'supplier',
             'lower_limit', 'upper_limit', 'target_value', 'created_at', 'updated_at'
         ]
-        return export_data(request, queryset, 'RawMaterialStandard', fields, 'excel')
+        field_names = [
+            '原料名称', '测试项目', '标准类型', '供应商',
+            '下限', '上限', '目标值', '创建时间', '更新时间'
+        ]
+        return export_data(request, queryset, 'RawMaterialStandard', fields, 'excel', field_names)
     
     export_standards_excel.short_description = "导出选定标准记录 (Excel)"
     

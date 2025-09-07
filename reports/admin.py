@@ -183,6 +183,11 @@ class InspectionReportAdmin(admin.ModelAdmin):
                 'report_number', 'report_type', 'product_code', 'batch_number',
                 'production_date', 'inspector', 'reviewer', 'report_date',
                 'conclusion', 'status', 'remarks'
+            ],
+            field_names=[
+                '报告编号', '报告类型', '产品代码', '批号',
+                '生产日期', '检测员', '审核员', '报告日期',
+                '结论', '状态', '备注'
             ]
         )
     
@@ -199,6 +204,11 @@ class InspectionReportAdmin(admin.ModelAdmin):
                 'report_number', 'report_type', 'product_code', 'batch_number',
                 'production_date', 'inspector', 'reviewer', 'report_date',
                 'conclusion', 'status', 'remarks'
+            ],
+            field_names=[
+                '报告编号', '报告类型', '产品代码', '批号',
+                '生产日期', '检测员', '审核员', '报告日期',
+                '结论', '状态', '备注'
             ]
         )
     
