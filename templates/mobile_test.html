@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动端测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>移动端访问测试</h1>
+
+        <div class="status success">
+            <h3>✅ 服务器运行正常</h3>
+            <p>Django开发服务器正在运行</p>
+        </div>
+
+        <div class="status info">
+            <h3>📱 移动端访问地址</h3>
+            <p><strong>http://172.16.0.253:8000</strong></p>
+            <p>请确保您的手机和电脑在同一WiFi网络下</p>
+        </div>
+
+        <div class="status warning">
+            <h3>⚠️ 注意事项</h3>
+            <ul>
+                <li>确保防火墙允许端口8000</li>
+                <li>确保手机和电脑在同一局域网</li>
+                <li>如果无法访问，请检查网络设置</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="/" class="button">访问主页面</a>
+            <a href="/admin/" class="button">访问管理后台</a>
+        </div>
+
+        <div class="status info" style="margin-top: 20px;">
+            <h3>🔧 技术信息</h3>
+            <p><strong>服务器地址:</strong> 0.0.0.0:8000</p>
+            <p><strong>本地地址:</strong> localhost:8000 或 127.0.0.1:8000</p>
+            <p><strong>局域网地址:</strong> 172.16.0.253:8000</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -4,6 +4,7 @@ from products.models import DryFilmProduct, AdhesiveProduct
 from core.api_views import (
     get_product_data, search_products, get_moving_range_data, get_capability_analysis_data
 )
+from django.views.decorators.csrf import csrf_exempt
 
 def index(request):
     """首页 - 查询和图表展示"""
@@ -22,3 +23,14 @@ def index(request):
         'adhesive_production_lines': adhesive_production_lines,
     }
     return render(request, 'dashboard/index.html', context)
+
+@csrf_exempt
+def mobile_test(request):
+    """移动端测试页面"""
+    return render(request, 'mobile_test.html')
+
+# API视图函数 - 直接使用core.api_views中的函数
+get_product_data = get_product_data
+search_products = search_products
+get_moving_range_data = get_moving_range_data
+get_capability_analysis_data = get_capability_analysis_data

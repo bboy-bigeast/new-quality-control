@@ -21,6 +21,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'quality_control.settings')
 application = get_wsgi_application()
 
 # Use StaticFilesHandler to serve static files in production
+# Note: This will handle static files but favicon is handled by our custom middleware
 if not settings.DEBUG:
     application = StaticFilesHandler(application)
 
@@ -31,11 +32,15 @@ if __name__ == '__main__':
     print("⏹️  Press Ctrl+C to stop the server")
     print("-" * 60)
     
-    # Serve the application using Waitress
+    # Serve the application using Waitress with optimized configuration
     serve(
         application,
         host='0.0.0.0',  # Listen on all interfaces
         port=8000,       # Default port
-        threads=4,       # Number of threads
+        threads=8,       # Increased number of threads for better concurrency
+        connection_limit=100,  # Maximum number of concurrent connections
+        asyncore_use_poll=True,  # Use poll for better performance
+        channel_timeout=60,  # Channel timeout in seconds
+        cleanup_interval=30,  # Cleanup interval in seconds
         url_scheme='http'
     )

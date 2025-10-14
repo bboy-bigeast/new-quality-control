@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}原料管理系统{% endblock %}</title>
@@ -114,7 +115,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="/static/js/clipboard-utils.js"></script>
+    <script src="{% static 'js/clipboard-utils.js' %}"></script>
     <script>
         // 自动关闭警告消息
         setTimeout(function() {
