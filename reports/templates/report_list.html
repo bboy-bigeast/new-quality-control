@@ -196,13 +196,15 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="/static/jquery.min.js"></script>
+<script src="/static/jquery.dataTables.min.js"></script>
 <script>
     // 页面加载后自动应用筛选条件
     document.addEventListener('DOMContentLoaded', function() {
         // 初始化数据表格
         $('#dataTable').DataTable({
             language: {
-                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/zh.json'
+                url: '/static/datatables-zh.json'
             },
             pageLength: 25,
             ordering: true,
