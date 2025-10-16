@@ -7,9 +7,9 @@
 python deploy_waitress_production.py
 ```
 
-### 2. 使用启动脚本
+### 2. 使用生产部署脚本
 ```bash
-python start_server.py
+python deploy_waitress_production.py
 ```
 
 ### 3. Windows批处理文件
@@ -82,6 +82,28 @@ python manage.py collectstatic --noinput
 python manage.py migrate
 ```
 
+## 📱 移动端访问
+
+### 手机访问配置
+项目已优化支持手机访问，所有静态资源已本地化：
+
+- **访问地址**: http://[电脑IP地址]:8000
+- **获取电脑IP**: 在命令提示符运行 `ipconfig` 查看IPv4地址
+- **示例**: http://172.16.0.253:8000
+
+### 静态资源说明
+所有前端资源已本地托管，无需外部CDN：
+- ✅ Bootstrap CSS/JS
+- ✅ Chart.js
+- ✅ jQuery & DataTables
+- ✅ Font Awesome图标
+- ✅ 所有字体文件
+
+### 移动端兼容性
+- 响应式设计，适配各种屏幕尺寸
+- 触摸友好的界面元素
+- 优化的加载性能
+
 ## 📊 监控和维护
 
 ### 检查服务状态
@@ -92,6 +114,9 @@ sc query QualityControlWaitress
 ### 查看日志
 - 应用日志: `logs/django.log`
 - Windows事件日志: 查看"Quality Control Waitress Server"服务日志
+
+### 移动端访问测试
+确保手机和电脑在同一WiFi网络，在手机浏览器访问电脑IP地址。
 
 ### 重启服务
 ```bash
@@ -142,6 +167,21 @@ python manage.py collectstatic --noinput
 
 # 检查静态文件目录权限
 ```
+
+### 移动端访问问题
+1. **页面空白或样式异常**:
+   - 检查所有静态资源是否本地托管
+   - 验证Font Awesome字体文件路径
+   - 清除手机浏览器缓存
+
+2. **JavaScript错误**:
+   - 确保jQuery、Bootstrap、Chart.js等库正确加载
+   - 检查浏览器控制台错误信息
+
+3. **网络连接问题**:
+   - 确认手机和电脑在同一网络
+   - 检查防火墙是否允许端口8000
+   - 验证电脑IP地址是否正确
 
 ### 数据库连接问题
 确保MySQL服务正在运行：
@@ -219,5 +259,5 @@ python install_waitress_service.py start
 
 ---
 
-**最后更新**: 2025-09-07  
-**版本**: 1.0.0
+**最后更新**: 2025-10-16  
+**版本**: 1.1.0
